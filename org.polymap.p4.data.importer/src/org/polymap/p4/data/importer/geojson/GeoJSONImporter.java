@@ -85,6 +85,8 @@ public class GeoJSONImporter
 
     private SchemaNamePrompt       schemaNamePrompt;
 
+    private GeoJSONFeatureIterator featureIterator;
+
 
     @Override
     public void init( ImporterSite newSite, IProgressMonitor monitor ) throws Exception {
@@ -120,7 +122,10 @@ public class GeoJSONImporter
 
     @Override
     public void verify( IProgressMonitor monitor ) {
-        GeoJSONFeatureIterator featureIterator = new GeoJSONFeatureIterator( geojsonFile, charsetPrompt.selection(), schemaNamePrompt.selection(), crsPrompt.selection(), monitor );
+        if (featureIterator != null) {
+            featureIterator.close();
+        }
+        featureIterator = new GeoJSONFeatureIterator( geojsonFile, charsetPrompt.selection(), schemaNamePrompt.selection(), crsPrompt.selection(), monitor );
         try {
 
             ListFeatureCollection featureList = new ListFeatureCollection( featureIterator.getFeatureType() );
@@ -197,7 +202,8 @@ public class GeoJSONImporter
 
     @Override
     public void execute( IProgressMonitor monitor ) throws Exception {
-        final GeoJSONFeatureIterator featureIterator = new GeoJSONFeatureIterator( geojsonFile, charsetPrompt.selection(), schemaNamePrompt.selection(), crsPrompt.selection(), monitor );
+        // must be created in verify before
+        featureIterator.reset();
         features = new FeatureCollection() {
 
             @Override

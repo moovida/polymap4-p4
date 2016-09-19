@@ -42,25 +42,42 @@ public class GeoJSONFeatureIterator
 
     private InputStreamReader              isr        = null;
 
-    private SimpleFeatureType              schema     = null;
+    private final SimpleFeatureType        schema;
+
+    private final FeatureJSON              featureJSON;
+
+    private final File                     jsonFile;
+
+    private final Charset                  encoding;
 
 
     public GeoJSONFeatureIterator( File file, Charset encoding, String schemaName, CoordinateReferenceSystem crs,
             IProgressMonitor monitor ) {
+        this.jsonFile = file;
+        this.encoding = encoding;
         try {
-            FeatureJSON featureJSON = new FeatureJSON();
+            featureJSON = new FeatureJSON();
             featureJSON.setEncodeFeatureCRS( false );
             featureJSON.setEncodeNullValues( true );
             isr = new InputStreamReader( new FileInputStream( file ), encoding );
             schema = GeoJSONUtil.parse( new LaxFeatureTypeHandler( schemaName, crs ), isr, false );
             isr.close();
             featureJSON.setFeatureType( schema );
-            isr = new InputStreamReader( new FileInputStream( file ), encoding );
-            underlying = featureJSON.streamFeatureCollection( isr );
+
+            reset();
         }
         catch (Exception e) {
             throw new RuntimeException( e );
         }
+    }
+
+
+    public void reset() throws IOException {
+        if (isr != null) {
+            isr.close();
+        }
+        isr = new InputStreamReader( new FileInputStream( jsonFile ), encoding );
+        underlying = featureJSON.streamFeatureCollection( isr );
     }
 
 
