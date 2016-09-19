@@ -67,6 +67,8 @@ import org.polymap.p4.data.importer.shapefile.ShpFeatureTableViewer;
 public class GeoJSONImporter
         implements Importer {
 
+    private static final IMessages i18n = Messages.forPrefix( "ImporterGeoJSON" );
+
     private static final IMessages i18nPrompt = Messages.forPrefix( "ImporterPrompt" );
 
     protected ImporterSite         site;
@@ -92,8 +94,8 @@ public class GeoJSONImporter
     public void init( ImporterSite newSite, IProgressMonitor monitor ) throws Exception {
         this.site = newSite;
         site.icon.set( ImporterPlugin.images().svgImage( "json.svg", SvgImageRegistryHelper.NORMAL24 ) );
-        site.summary.set( "GeoJSON file: " + geojsonFile.getName() );
-        site.description.set( "GeoJSON is a format for encoding a variety of geographic data structures." );
+        site.summary.set( i18n.get( "summary", geojsonFile.getName() ) );
+        site.description.set( i18n.get( "description" ) );
         site.terminal.set( true );
     }
 

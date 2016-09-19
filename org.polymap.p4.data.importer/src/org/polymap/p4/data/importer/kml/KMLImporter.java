@@ -57,6 +57,8 @@ import org.polymap.p4.data.importer.shapefile.ShpFeatureTableViewer;
 public class KMLImporter
         implements Importer {
 
+    private static final IMessages i18n = Messages.forPrefix( "ImporterKML" );
+
     private static final IMessages i18nPrompt = Messages.forPrefix( "ImporterPrompt" );
 
     private ImporterSite           site;
@@ -76,8 +78,8 @@ public class KMLImporter
     public void init( ImporterSite importerSite, IProgressMonitor monitor ) throws Exception {
         this.site = importerSite;
         importerSite.icon.set( ImporterPlugin.images().svgImage( "file-xml.svg", SvgImageRegistryHelper.NORMAL24 ) );
-        importerSite.summary.set( "KML file: " + kmlFile.getName() );
-        importerSite.description.set( "Keyhole Markup Language (KML) is for expressing geographic annotation and visualization within Internet-based, two-dimensional maps." );
+        importerSite.summary.set( i18n.get( "summary", kmlFile.getName() ) );
+        importerSite.description.set( i18n.get( "description" ) );
         importerSite.terminal.set( true );
     }
 
