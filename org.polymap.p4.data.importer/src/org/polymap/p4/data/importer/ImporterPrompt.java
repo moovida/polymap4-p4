@@ -25,6 +25,8 @@ import org.polymap.core.runtime.config.Mandatory;
 
 import org.polymap.rhei.batik.toolkit.IPanelToolkit;
 
+import org.polymap.p4.P4Panel;
+
 /**
  * 
  * @author <a href="http://www.polymap.de">Falko Bräutigam</a>
@@ -107,6 +109,8 @@ public abstract class ImporterPrompt
      * 
      */
     public static interface PromptUIBuilder {
+        
+        public static final int         DEFAULT_WIDTH = P4Panel.SIDE_PANEL_WIDTH2 - 50;
         
         /**
          * 

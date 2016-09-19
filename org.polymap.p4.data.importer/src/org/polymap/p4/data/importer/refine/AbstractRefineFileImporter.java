@@ -182,23 +182,24 @@ public abstract class AbstractRefineFileImporter<T extends FormatAndOptions>
     @Override
     public void createPrompts( IProgressMonitor monitor ) throws Exception {
         site.newPrompt( "coordinates" )
-            .summary.put( i18nPrompt.get( "coordinatesSummary" ) )
-            .description.put( i18nPrompt.get( "coordinatesDescription" ) )
-            .value.put( coordinatesPromptLabel() )
-            .extendedUI.put( coordinatesPromptUiBuilder() );
+              .summary.put( i18nPrompt.get( "coordinatesSummary" ) )
+              .description.put( i18nPrompt.get( "coordinatesDescription" ) )
+              .value.put( coordinatesPromptLabel() )
+              .extendedUI.put( coordinatesPromptUiBuilder() );
 
         crsPrompt = new CrsPrompt( site, i18nPrompt.get("crsSummary"), i18nPrompt.get( "crsDescription" ), () -> {
-                    try {
-                        return CRS.decode( "EPSG:4326" );
-                    }
-                    catch (Exception e) {
-                        // do nothing
-                    }
-                    return null;
-                } );
+            try {
+                return CRS.decode( "EPSG:4326" );
+            }
+            catch (Exception e) {
+                // do nothing
+            }
+            return null;
+        });
+        
         schemaNamePrompt = new SchemaNamePrompt( site, i18nPrompt.get("schemaSummary"), i18nPrompt.get( "schemaDescription" ), () -> {
             return layerName();
-        } );
+        });
     }
     
     
@@ -469,7 +470,7 @@ public abstract class AbstractRefineFileImporter<T extends FormatAndOptions>
                 String[] columnNames = numberColumnNames();
                 if (columnNames.length == 0) {
                     FormDataFactory.on( tk.createLabel( parent, i18nPrompt.get( "coordinatesNocolumns" ),
-                            SWT.LEFT ) ).left( 1 ).top( 5 ).width( 500 );
+                            SWT.LEFT ) ).left( 1 ).top( 5 ).width( DEFAULT_WIDTH );
                 }
                 else {
                     // 2 lists with all columns to select and a label in
@@ -477,10 +478,9 @@ public abstract class AbstractRefineFileImporter<T extends FormatAndOptions>
                     Label lonLabel = new Label( parent, SWT.LEFT );
                     lonLabel.setText( i18nRefine.get( "lonLabel" ) );
 
-                    Combo lonValues = new Combo( parent, SWT.DROP_DOWN );
+                    Combo lonValues = new Combo( parent, SWT.DROP_DOWN|SWT.READ_ONLY );
                     lonValues.setItems( columnNames );
                     lonValues.addSelectionListener( new SelectionAdapter() {
-
                         @Override
                         public void widgetSelected( SelectionEvent e ) {
                             Combo c = (Combo)e.getSource();
@@ -499,11 +499,10 @@ public abstract class AbstractRefineFileImporter<T extends FormatAndOptions>
                     Label latLabel = new Label( parent, SWT.LEFT );
                     latLabel.setText( i18nRefine.get( "latLabel" ) );
 
-                    Combo latValues = new Combo( parent, SWT.DROP_DOWN );
+                    Combo latValues = new Combo( parent, SWT.DROP_DOWN|SWT.READ_ONLY );
                     latValues.setItems( columnNames );
 
                     latValues.addSelectionListener( new SelectionAdapter() {
-
                         @Override
                         public void widgetSelected( SelectionEvent e ) {
                             Combo c = (Combo)e.getSource();
@@ -519,10 +518,10 @@ public abstract class AbstractRefineFileImporter<T extends FormatAndOptions>
                         }
                     }
 
-                    FormDataFactory.on( latLabel ).left( 1 ).top( 5 ).width( 500 );
-                    FormDataFactory.on( latValues ).left( 1 ).top( latLabel, 5 ).width( 500 );
-                    FormDataFactory.on( lonLabel ).left( 1 ).top( latValues, 15 ).width( 500 );
-                    FormDataFactory.on( lonValues ).left( 1 ).top( lonLabel, 5 ).width( 500 ).bottom( 95 );
+                    FormDataFactory.on( latLabel ).left( 1 ).top( 5 ).width( DEFAULT_WIDTH );
+                    FormDataFactory.on( latValues ).left( 1 ).top( latLabel, 5 ).width( DEFAULT_WIDTH );
+                    FormDataFactory.on( lonLabel ).left( 1 ).top( latValues, 15 ).width( DEFAULT_WIDTH );
+                    FormDataFactory.on( lonValues ).left( 1 ).top( lonLabel, 5 ).width( DEFAULT_WIDTH ).bottom( 95 );
                 }
             }
 

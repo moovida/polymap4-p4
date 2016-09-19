@@ -73,7 +73,8 @@ public abstract class FilteredListPromptUIBuilder
     public void createContents( ImporterPrompt prompt, Composite parent, IPanelToolkit tk ) {
         parent.setLayout( FormLayoutFactory.defaults().spacing( 0 ).create() );
         
-        Label desc = FormDataFactory.on( tk.createLabel( parent, prompt.description.get(), SWT.WRAP ) ).top( 0 ).left( 0 ).width( 350 ).control();
+        Label desc = FormDataFactory.on( tk.createLabel( parent, prompt.description.get(), SWT.WRAP ) )
+                .top( 0 ).left( 0 ).width( DEFAULT_WIDTH ).control();
 
         items = listItems();
         String initiallySelected = initiallySelectedItem();
@@ -107,7 +108,7 @@ public abstract class FilteredListPromptUIBuilder
         } );
 
         list = on( tk.createList( parent, SWT.V_SCROLL, SWT.H_SCROLL ) )
-                .left(0).top( actionText.getControl(), 10 ).right( 100 ).width( 350 ).height( 200 ).control();
+                .left(0).top( actionText.getControl(), 10 ).right( 100 ).width( DEFAULT_WIDTH ).height( 200 ).control();
                 
         setListItems( filterSelectable( initiallySelected ) );
         list.setSelection( new String[] { initiallySelected } );

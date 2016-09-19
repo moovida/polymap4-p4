@@ -242,15 +242,13 @@ public class LayersPanel
             FeatureLayer.of( (ILayer)elm ).thenAccept( fl -> {
                 if (fl.isPresent()) {
                     if (fl.get().featureSource().getSchema().getGeometryDescriptor() != null) {
-                        UIThreadExecutor.async( () -> {
-                            super.perform( _viewer, elm );
-                        });
+                        UIThreadExecutor.async( () -> super.perform( _viewer, elm ) );
                         return;
                     }
                     StatusDispatcher.handle( new Status( IStatus.INFO, P4Plugin.ID, i18n.get( "invisible" ) ), Style.SHOW, Style.LOG );
                 }
                 else {
-                    super.perform( _viewer, elm );
+                    UIThreadExecutor.async( () -> super.perform( _viewer, elm ) );
                 }
             })
             .exceptionally( e -> {

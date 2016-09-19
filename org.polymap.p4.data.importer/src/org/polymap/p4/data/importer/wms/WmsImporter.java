@@ -113,35 +113,39 @@ public class WmsImporter
     @Override
     public void createPrompts( IProgressMonitor monitor ) throws Exception {
         // start without alert icon and un-expanded
-        urlPrompt = site.newPrompt( "url" ).summary.put( "URL" ).value.put( "<Click to specify>" ).description.put( "The URL of the remote server" ).severity.put( Severity.INFO ).extendedUI.put( new PromptUIBuilder() {
+        urlPrompt = site.newPrompt( "url" )
+                .summary.put( "URL" )
+                .value.put( "<Click to specify>" )
+                .description.put( "The URL of the remote server" )
+                .severity.put( Severity.INFO )
+                .extendedUI.put( new PromptUIBuilder() {
+                    @Override
+                    public void createContents( ImporterPrompt prompt, Composite parent, IPanelToolkit tk ) {
+                        parent.setLayout( FormLayoutFactory.defaults().spacing( 3 ).create() );
+                        Text text = on( tk.createText( parent, url != null ? url
+                                : "", SWT.BORDER ) ).top( 0 ).left( 0 ).right( 100 ).width( 320 ).control();
+                        text.forceFocus();
 
-            @Override
-            public void createContents( ImporterPrompt prompt, Composite parent, IPanelToolkit tk ) {
-                parent.setLayout( FormLayoutFactory.defaults().spacing( 3 ).create() );
-                Text text = on( tk.createText( parent, url != null ? url
-                        : "", SWT.BORDER ) ).top( 0 ).left( 0 ).right( 100 ).width( 350 ).control();
-                text.forceFocus();
+                        final Label msg = on( tk.createLabel( parent, "" ) ).fill().top( text ).control();
 
-                final Label msg = on( tk.createLabel( parent, "" ) ).fill().top( text ).control();
+                        text.addModifyListener( new ModifyListener() {
 
-                text.addModifyListener( new ModifyListener() {
+                            @Override
+                            public void modifyText( ModifyEvent ev ) {
+                                url = text.getText();
+                                msg.setText( urlPattern.matcher( url ).matches() ? "Ok" : "Not a valid URL" );
+                            }
+                        } );
+                    }
+
 
                     @Override
-                    public void modifyText( ModifyEvent ev ) {
-                        url = text.getText();
-                        msg.setText( urlPattern.matcher( url ).matches() ? "Ok" : "Not a valid URL" );
+                    public void submit( ImporterPrompt prompt ) {
+                        urlPrompt.severity.set( Severity.REQUIRED );
+                        urlPrompt.ok.set( urlPattern.matcher( url ).matches() );
+                        urlPrompt.value.set( url );
                     }
                 } );
-            }
-
-
-            @Override
-            public void submit( ImporterPrompt prompt ) {
-                urlPrompt.severity.set( Severity.REQUIRED );
-                urlPrompt.ok.set( urlPattern.matcher( url ).matches() );
-                urlPrompt.value.set( url );
-            }
-        } );
     }
 
 

@@ -53,15 +53,15 @@ public abstract class ComboBasedPromptUiBuilder
     @Override
     public void createContents( ImporterPrompt prompt, Composite parent, IPanelToolkit tk ) {
         parent.setLayout( new FormLayout() );
-        Label desc = FormDataFactory.on( tk.createLabel( parent, prompt.description.get(), SWT.WRAP ) ).top( 0 ).left( 0 ).right( 100 ).control();
+        Label desc = FormDataFactory.on( tk.createLabel( parent, prompt.description.get(), SWT.WRAP ) )
+                .top( 0 ).left( 0 ).right( 100 ).width( DEFAULT_WIDTH ).control();
 
         Combo combo = new Combo( parent, SWT.SINGLE | SWT.BORDER | SWT.DROP_DOWN );
-        FormDataFactory.on( combo ).left( 1 ).top( desc, 15 ).width( 500 );
+        FormDataFactory.on( combo ).left( 1 ).top( desc, 15 ).width( DEFAULT_WIDTH );
 
         List<String> allValues = allValues();
         combo.setItems( allValues.stream().toArray( String[]::new ) );
         combo.addSelectionListener( new SelectionAdapter() {
-
             @Override
             public void widgetSelected( SelectionEvent e ) {
                 value = allValues.get( combo.getSelectionIndex() );
