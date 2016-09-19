@@ -25,8 +25,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.beans.PropertyChangeEvent;
 
-import org.geotools.data.DataAccess;
-import org.opengis.feature.type.FeatureType;
+import org.opengis.feature.simple.SimpleFeatureType;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -43,11 +42,8 @@ import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 
-import org.polymap.core.data.pipeline.DataSourceDescription;
-import org.polymap.core.data.util.NameImpl;
 import org.polymap.core.mapeditor.MapViewer;
 import org.polymap.core.operation.DefaultOperation;
 import org.polymap.core.operation.OperationSupport;
@@ -56,6 +52,7 @@ import org.polymap.core.project.IMap;
 import org.polymap.core.project.ops.TwoPhaseCommitOperation;
 import org.polymap.core.project.ui.ProjectNodeContentProvider;
 import org.polymap.core.project.ui.ProjectNodeLabelProvider;
+import org.polymap.core.runtime.UIThreadExecutor;
 import org.polymap.core.runtime.event.EventHandler;
 import org.polymap.core.runtime.event.EventManager;
 import org.polymap.core.runtime.i18n.IMessages;
@@ -174,22 +171,6 @@ public class LayersPanel
                 ev -> ev.getSource() instanceof ILayer && map.get().containsLayer( (ILayer)ev.getSource() ) ) );
     }
 
-    protected boolean canBeVisible( ILayer layer ) {
-        try {
-            Optional<DataSourceDescription> dsd = P4Plugin.allResolver().connectLayer( layer, new NullProgressMonitor());
-            if (dsd.isPresent() && dsd.get().service.get() instanceof DataAccess) {
-                FeatureType schema = P4Plugin.localCatalog().localFeaturesStore().getSchema( new NameImpl( dsd.get().resourceName.get() ) );
-                if (schema != null && schema.getGeometryDescriptor() == null) {
-                    // no geometries, hide it
-                    return false;
-                } // true in all other cases
-            }
-        }
-        catch (Exception e) {
-            // do nothing here, shows the layer
-        }
-        return true;
-    }
     
     @EventHandler( display=true, delay=10 )
     protected void layerChanged( List<PropertyChangeEvent> evs ) {
@@ -201,7 +182,10 @@ public class LayersPanel
         }
     }
     
-    
+
+    /**
+     * 
+     */
     protected final class LayerIconProvider
             extends CellLabelProvider {
 
@@ -236,17 +220,43 @@ public class LayersPanel
     
         @Override
         protected boolean initSelection( MdListViewer _viewer, Object elm ) {
-            return canBeVisible( (ILayer)elm ) && ((ILayer)elm).userSettings.get().visible.get();
+            try {
+                // check: feature layer without geom
+                Optional<FeatureLayer> fl = FeatureLayer.of( (ILayer)elm ).get();
+                if (fl.isPresent()) {
+                    SimpleFeatureType schema = fl.get().featureSource().getSchema();
+                    if (schema.getGeometryDescriptor() == null) {
+                        return false;
+                    }
+                }
+            }
+            catch (Exception e) {
+                log.warn( "", e );
+            }
+            
+            return ((ILayer)elm).userSettings.get().visible.get();
         }
 
         @Override
         public void perform( MdListViewer _viewer, Object elm ) {
-            if (canBeVisible( (ILayer)elm )) {
-                super.perform( _viewer, elm );
-            }
-            else {
-                StatusDispatcher.handle( new Status( IStatus.INFO, P4Plugin.ID, i18n.get( "invisible" ) ), Style.SHOW, Style.LOG );
-            }
+            FeatureLayer.of( (ILayer)elm ).thenAccept( fl -> {
+                if (fl.isPresent()) {
+                    if (fl.get().featureSource().getSchema().getGeometryDescriptor() != null) {
+                        UIThreadExecutor.async( () -> {
+                            super.perform( _viewer, elm );
+                        });
+                        return;
+                    }
+                    StatusDispatcher.handle( new Status( IStatus.INFO, P4Plugin.ID, i18n.get( "invisible" ) ), Style.SHOW, Style.LOG );
+                }
+                else {
+                    super.perform( _viewer, elm );
+                }
+            })
+            .exceptionally( e -> {
+                StatusDispatcher.handleError( "Unable to set visibility of layer.", e );
+                return null;
+            });
         }
         
         @Override

@@ -24,7 +24,7 @@ import org.polymap.core.runtime.config.ConfigurationFactory;
 import org.polymap.core.runtime.config.Immutable;
 
 /**
- * Fired when {@link FeatureSelection#setClicked(Feature)} has been called. 
+ * Fired when {@link FeatureLayer#setClicked(Feature)} has been called. 
  *
  * @author <a href="http://www.polymap.de">Falko Bräutigam</a>
  */
@@ -38,7 +38,7 @@ public class FeatureClickEvent
     public Config<Feature>      previous;
     
     
-    public FeatureClickEvent( FeatureSelection source, Optional<Feature> clicked, Optional<Feature> previous ) {
+    public FeatureClickEvent( FeatureLayer source, Optional<Feature> clicked, Optional<Feature> previous ) {
         super( source );
         ConfigurationFactory.inject( this );
         this.clicked.set( clicked.orElse( null ) );
@@ -46,8 +46,8 @@ public class FeatureClickEvent
     }
 
     @Override
-    public FeatureSelection getSource() {
-        return (FeatureSelection)super.getSource();
+    public FeatureLayer getSource() {
+        return (FeatureLayer)super.getSource();
     }
     
 }

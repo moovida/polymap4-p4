@@ -14,7 +14,6 @@
  */
 package org.polymap.p4.layer;
 
-import static org.polymap.core.runtime.UIThreadExecutor.async;
 import static org.polymap.core.runtime.event.TypeEventFilter.ifType;
 
 import java.util.HashMap;
@@ -25,18 +24,14 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.geotools.data.FeatureStore;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.eclipse.core.runtime.IProgressMonitor;
-
 import org.polymap.core.project.ILayer;
 import org.polymap.core.project.IMap;
 import org.polymap.core.project.ProjectNode.ProjectNodeCommittedEvent;
-import org.polymap.core.runtime.UIJob;
+import org.polymap.core.runtime.UIThreadExecutor;
 import org.polymap.core.runtime.event.EventHandler;
 import org.polymap.core.runtime.event.EventManager;
 import org.polymap.core.ui.UIUtils;
@@ -73,9 +68,9 @@ public class FeatureSelectionTableContrib
     @Scope( P4Plugin.Scope )
     private Context<IMap>               map;
 
-    /** Outbound. See {@link P4Panel#featureSelection}. */
+    /** Outbound. See {@link P4Panel#featureLayer}. */
     @Scope( P4Plugin.Scope )
-    private Context<FeatureSelection>   featureSelection;
+    private Context<FeatureLayer>       featureLayer;
     
     private IContributionSite           site;
 
@@ -169,58 +164,57 @@ public class FeatureSelectionTableContrib
         Memento memento = site.panel().site().memento();
         Optional<String> selectedLayerId = memento.getOrCreateChild( getClass().getName() ).optString( "selectedLayerId" );
         
-        FeatureSelection.forLayer( layer ).waitForFs( 
-                fs -> async( () -> {
+        FeatureLayer.of( layer ).thenAccept( fl -> {
+            if (fl.isPresent()) {
+                UIThreadExecutor.async( () -> {
                     RadioItem item = new RadioItem( group );
                     item.text.put( label( layer ) );
                     item.tooltip.put( "Show contents of " + layer.label.get() );
                     item.icon.put( P4Plugin.images().svgImage( "layers.svg", P4Plugin.TOOLBAR_ICON_CONFIG ) );
                     AtomicBoolean wasVisible = new AtomicBoolean();
                     item.onSelected.put( ev -> {
-                        log.info( "fs=" + fs );
-                        createTableView( layer, fs );
+                        featureLayer.set( fl.get() );
+                        createTableView();
                         saveState( layer, true );
 
                         wasVisible.set( layer.userSettings.get().visible.get() );
                         layer.userSettings.get().visible.set( true );
                     });
                     item.onUnselected.put( ev -> {
+                        featureLayer.set( null );
                         ((ProjectMapPanel)site.panel()).closeButtomView();
                         layer.userSettings.get().visible.set( wasVisible.get() );
                         saveState( layer, false );
                     });
-                    
+
                     createdLayerIds.put( layer.id(), item );
-                    
+
                     // memento select
                     item.selected.set( selectedLayerId.orElse( "$%&" ).equals( layer.id() ) );
-                }),
-                e -> {
-                    log.info( "No FeatureSelection for: " + layer.label.get() + " (" + e.getMessage() + ")" );
                 });
+            }
+        })
+        .exceptionally( e -> {
+            log.warn( "No FeatureSelection for: " + layer.label.get() + " (" + e.getMessage() + ")" );
+            return null;
+        });
     }
     
     
-    protected void createTableView( ILayer layer, FeatureStore fs ) {
+    /**
+     * Creates the table for the current {@link #featureLayer}.
+     */
+    protected void createTableView() {
         // create bottom view
-        ((ProjectMapPanel)site.panel()).updateButtomView( parent -> {
-            
-            site.toolkit().createFlowText( parent, " Loading " + layer.label.get() + "..." );
+        ((ProjectMapPanel)site.panel()).updateButtomView( parent -> {            
+            site.toolkit().createFlowText( parent, " Loading " + featureLayer.get().layer().label.get() + "..." );
             parent.layout();
-            
-            new UIJob( "Loading data" ) {
-                @Override
-                protected void runWithException( IProgressMonitor monitor ) throws Exception {
-                    async( () -> {
-                        UIUtils.disposeChildren( parent );
-                        FeatureSelection layerFeatureSelection = FeatureSelection.forLayer( layer );
-                        featureSelection.set( layerFeatureSelection );
-                        
-                        new FeatureSelectionTable( parent, layerFeatureSelection, site.panel() );
-                        parent.layout();
-                    });        
-                }
-            }.scheduleWithUIUpdate();  // UI callback?
+
+            UIThreadExecutor.async( () -> {
+                UIUtils.disposeChildren( parent );
+                new FeatureSelectionTable( parent, featureLayer.get(), site.panel() );
+                parent.layout();
+            });
         });
     }
     

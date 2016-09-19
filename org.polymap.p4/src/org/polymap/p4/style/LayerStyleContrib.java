@@ -15,10 +15,6 @@
 package org.polymap.p4.style;
 
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -34,7 +30,7 @@ import org.polymap.rhei.batik.toolkit.md.MdToolbar2;
 
 import org.polymap.p4.Messages;
 import org.polymap.p4.P4Plugin;
-import org.polymap.p4.layer.FeatureSelection;
+import org.polymap.p4.layer.FeatureLayer;
 import org.polymap.p4.layer.FeatureSelectionTable;
 import org.polymap.p4.map.ProjectMapPanel;
 
@@ -60,7 +56,7 @@ public class LayerStyleContrib
     protected Context<StyleEditorInput>     styleEditorInput;
 
     @Scope( P4Plugin.Scope )
-    protected Context<FeatureSelection>     featureSelection;
+    protected Context<FeatureLayer>     featureLayer;
     
     @Override
     public void fillToolbar( IContributionSite site, MdToolbar2 toolbar ) {
@@ -68,20 +64,22 @@ public class LayerStyleContrib
                 && site.tagsContain( FeatureSelectionTable.TOOLBAR_TAG )) {
             assert item == null;
             
-            try {
-                styleEditorInput.set( new StyleEditorInput( featureSelection.get().layer().styleIdentifier.get(), featureSelection.get().waitForFs().get( 5, TimeUnit.SECONDS )));
-                item = new ActionItem( toolbar );
-                item.text.set( "" );
-                item.icon.set( P4Plugin.images().svgImage("palette.svg", P4Plugin.TOOLBAR_ICON_CONFIG ) );
-                item.tooltip.set( i18n.get("start") );
-                item.action.set( ev -> {
-//                    assert !childPanel.isPresent();
-                    childPanel = site.context().openPanel( site.panelSite().path(), LayerStylePanel.ID );
-                });
-            }
-            catch (TimeoutException | InterruptedException | ExecutionException e) {
-                StatusDispatcher.handleError( "Error during load of the FeatureStore", e );
-            }
+            featureLayer.ifPresent( fs -> {
+                try {
+                    styleEditorInput.set( new StyleEditorInput( fs.layer().styleIdentifier.get(), fs.featureSource() ) );
+                    item = new ActionItem( toolbar );
+                    item.text.set( "" );
+                    item.icon.set( P4Plugin.images().svgImage("palette.svg", P4Plugin.TOOLBAR_ICON_CONFIG ) );
+                    item.tooltip.set( i18n.get("start") );
+                    item.action.set( ev -> {
+                        //                    assert !childPanel.isPresent();
+                        childPanel = site.context().openPanel( site.panelSite().path(), LayerStylePanel.ID );
+                    });
+                }
+                catch (Exception e) {
+                    StatusDispatcher.handleError( "Error during load of the FeatureStore", e );
+                }
+            });
            
                 
 //                // FIXME does not work

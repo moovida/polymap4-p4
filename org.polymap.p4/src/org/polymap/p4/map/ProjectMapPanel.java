@@ -16,7 +16,7 @@ package org.polymap.p4.map;
 
 import static org.polymap.core.runtime.event.TypeEventFilter.ifType;
 import static org.polymap.core.ui.FormDataFactory.on;
-import static org.polymap.p4.layer.FeatureSelection.ff;
+import static org.polymap.p4.layer.FeatureLayer.ff;
 
 import java.util.function.Consumer;
 
@@ -200,23 +200,16 @@ public class ProjectMapPanel
         double x = coord.getDouble( 0 );
         double y = coord.getDouble( 1 );
         
-        if (featureSelection.isPresent()) {
-            featureSelection.get().waitForFs(
-                    fs -> {
-                        try {
-                            clickFeature( fs, new Coordinate( x, y ) );
-                        }
-                        catch (Exception e) {
-                            StatusDispatcher.handleError( "Unable to select feature.", e );
-                        }
-                    },
-                    e -> {
-                        ILayer layer = featureSelection.get().layer();
-                        StatusDispatcher.handleError( "Unable to retrieve store of layer: " + layer.label.get(), e );
-                    });
+        if (featureLayer.isPresent()) {
+            try {
+                clickFeature( featureLayer.get().featureSource(), new Coordinate( x, y ) );
+            }
+            catch (Exception e) {
+                StatusDispatcher.handleError( "Unable to select feature.", e );
+            }
         }
         else {
-            tk().createSnackbar( Appearance.FadeIn, "No active layer" );
+            tk().createSnackbar( Appearance.FadeIn, "No layer activated" );
         }
     }
 
@@ -248,7 +241,7 @@ public class ProjectMapPanel
             log.info( "Multiple features found: " + selected.size() );
         }
         Feature any = (Feature)Features.stream( selected ).findAny().get();
-        featureSelection.get().setClicked( any );
+        featureLayer.get().setClicked( any );
         log.info( "clicked: " + any );
     }
 

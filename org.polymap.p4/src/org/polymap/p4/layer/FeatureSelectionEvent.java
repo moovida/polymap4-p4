@@ -24,7 +24,7 @@ import org.polymap.core.runtime.config.Immutable;
 import org.polymap.core.runtime.config.Mandatory;
 
 /**
- * Fired when {@link FeatureSelection} selection has changed. 
+ * Fired when {@link FeatureLayer} selection has changed. 
  *
  * @author <a href="http://www.polymap.de">Falko Bräutigam</a>
  */
@@ -40,7 +40,7 @@ public class FeatureSelectionEvent
     public Config<Filter>       oldSelection;
     
     
-    public FeatureSelectionEvent( FeatureSelection source, Filter newSelection, Filter oldSelection ) {
+    public FeatureSelectionEvent( FeatureLayer source, Filter newSelection, Filter oldSelection ) {
         super( source );
         ConfigurationFactory.inject( this );
         this.newSelection.set( newSelection );
@@ -48,8 +48,8 @@ public class FeatureSelectionEvent
     }
 
     @Override
-    public FeatureSelection getSource() {
-        return (FeatureSelection)super.getSource();
+    public FeatureLayer getSource() {
+        return (FeatureLayer)super.getSource();
     }
 
 }

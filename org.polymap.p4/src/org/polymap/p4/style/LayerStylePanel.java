@@ -208,7 +208,7 @@ public class LayerStylePanel
                 fab.setEnabled( false );
                 //fab.setVisible( false );
                 
-                ILayer layer = featureSelection.get().layer();
+                ILayer layer = featureLayer.get().layer();
                 //layer.userSettings.get().visible.set( false );
                 //layer.userSettings.get().visible.set( true );
                 

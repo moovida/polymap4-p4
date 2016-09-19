@@ -1,6 +1,6 @@
 /* 
  * polymap.org
- * Copyright (C) 2015, Falko Bräutigam. All rights reserved.
+ * Copyright (C) 2015-2016, Falko Bräutigam. All rights reserved.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -69,8 +69,9 @@ public class FeatureSelectionTable {
     
     public static final String          TOOLBAR_TAG = "FeatureSelectionTable";
 
-    private FeatureSelection            featureSelection;
+    private FeatureLayer                featureLayer;
     
+    /** The {@link FeatureLayer#featureSource()} of {@link #featureLayer}. */
     private FeatureStore                fs;
     
     private IPanel                      panel;
@@ -84,23 +85,14 @@ public class FeatureSelectionTable {
     private MdToolbar2                  toolbar;
 
     
-    public FeatureSelectionTable( Composite parent, FeatureSelection featureSelection, IPanel panel ) {
+    public FeatureSelectionTable( Composite parent, FeatureLayer featureLayer, IPanel panel ) {
         BatikApplication.instance().getContext().propagate( this );
-        this.featureSelection = featureSelection;
+        this.featureLayer = featureLayer;
+        this.fs = featureLayer.featureSource();
         this.panel = panel;
 
         parent.setLayout( FormLayoutFactory.defaults().create() );
 
-        try {
-            this.fs = featureSelection.waitForFs().get();  // already loaded by LayerFeatureTableContribution
-//            this.features = fs.getFeatures( featureSelection.filter() );
-        }
-        catch (Exception e) {
-            log.warn( "", e );
-            tk().createLabel( parent, "<p>Unable to fetch features.</p>Reason: " + e.getLocalizedMessage() );
-            return;
-        }
-        
         // topbar
         Composite topbar = on( tk().createComposite( parent ) ).fill().noBottom().height( 36 ).control();
         topbar.setLayout( FormLayoutFactory.defaults().spacing( 3 ).margins( 3 ).create() );
@@ -125,7 +117,7 @@ public class FeatureSelectionTable {
         
         // listen to click events
         EventManager.instance().subscribe( this, ifType( FeatureClickEvent.class, ev -> 
-                ev.getSource() == this.featureSelection &&
+                ev.getSource() == this.featureLayer &&
                 ev.clicked.isPresent() ) );
     }
     
@@ -139,7 +131,7 @@ public class FeatureSelectionTable {
         viewer = new FeatureTableViewer( parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER );
 
         contentProvider = new LazyFeatureContentProvider();
-        contentProvider.filter( featureSelection.filter() );
+        contentProvider.filter( featureLayer.filter() );
         viewer.setContentProvider( contentProvider );
     
         // add columns
@@ -179,7 +171,7 @@ public class FeatureSelectionTable {
         viewer.addSelectionChangedListener( ev -> {
             on( ev.getSelection() ).first( IFeatureTableElement.class ).ifPresent( elm -> {
                 log.info( "selection: " + elm );
-                featureSelection.setClicked( elm.unwrap( Feature.class ).get() );
+                featureLayer.setClicked( elm.unwrap( Feature.class ).get() );
             
                 BatikApplication.instance().getContext().openPanel( panel.site().path(), FeaturePanel.ID );
             });
@@ -235,7 +227,7 @@ public class FeatureSelectionTable {
     
     
     protected void doSearch() {
-        Filter filter = featureSelection.filter();
+        Filter filter = featureLayer.filter();
         String s = searchText.getText().getText();
         if (!StringUtils.isBlank( s )) {
             if (!s.contains( "*" ) && !s.contains( "?" ) ) {

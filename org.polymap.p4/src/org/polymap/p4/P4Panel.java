@@ -28,7 +28,7 @@ import org.polymap.rhei.batik.Scope;
 import org.polymap.rhei.batik.toolkit.md.MdToolkit;
 
 import org.polymap.p4.layer.FeaturePanel;
-import org.polymap.p4.layer.FeatureSelection;
+import org.polymap.p4.layer.FeatureLayer;
 import org.polymap.p4.layer.FeatureSelectionTableContrib;
 
 /**
@@ -59,7 +59,7 @@ public abstract class P4Panel
      * choosing the feature table to open ({@link FeatureSelectionTableContrib}).
      */
     @Scope( P4Plugin.Scope )
-    protected Context<FeatureSelection>     featureSelection;
+    protected Context<FeatureLayer>         featureLayer;
     
     /**
      * Sets size to: 

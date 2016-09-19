@@ -46,7 +46,7 @@ import org.polymap.rhei.form.batik.BatikFormContainer;
 import org.polymap.p4.P4Panel;
 
 /**
- * Displays a {@link StandardFeatureForm} for the {@link FeatureSelection#clicked()}
+ * Displays a {@link StandardFeatureForm} for the {@link FeatureLayer#clicked()}
  * feature.
  *
  * @author <a href="http://www.polymap.de">Falko Bräutigam</a>
@@ -75,8 +75,8 @@ public class FeaturePanel
     @Override
     public void createContents( Composite parent ) {
         try {
-            fs = featureSelection.get().waitForFs().get(); 
-            feature = featureSelection.get().clicked().get();
+            fs = featureLayer.get().featureSource(); 
+            feature = featureLayer.get().clicked().get();
             
             uow = new UnitOfWork( fs );
             uow.track( feature );
