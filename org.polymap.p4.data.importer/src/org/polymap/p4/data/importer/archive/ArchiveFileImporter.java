@@ -54,7 +54,7 @@ import org.polymap.p4.data.importer.ImporterSite;
 public class ArchiveFileImporter
         implements Importer {
 
-    private static Log log = LogFactory.getLog( ArchiveFileImporter.class );
+    private static final Log log = LogFactory.getLog( ArchiveFileImporter.class );
 
     /** Allowed charsets. */
     public static final Charset[]   CHARSETS = {forName( "UTF-8" ), forName( "ISO-8859-1" ), forName( "IBM437" )};
@@ -135,7 +135,7 @@ public class ArchiveFileImporter
                     .charset.put( filenameCharset )
                     .run( file, monitor );
             
-            exception = null;;
+            exception = null;
             site.ok.set( true );
         }
         catch (Exception e) {

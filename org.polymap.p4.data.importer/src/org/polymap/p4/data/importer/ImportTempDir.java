@@ -24,8 +24,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.polymap.core.CorePlugin;
 
-import org.polymap.p4.P4Plugin;
-
 /**
  * Provides temp dirs for uploaded files and temp content of {@link Importer}s.  
  *
@@ -35,14 +33,14 @@ public class ImportTempDir {
 
     private static Log log = LogFactory.getLog( ImportTempDir.class );
     
-    private static final File           baseTempDir = new File( CorePlugin.getDataLocation( P4Plugin.instance() ), "importTemp" );
+    private static final File   baseTempDir = new File( CorePlugin.getDataLocation( ImporterPlugin.instance() ), "temp" );
 
     
     static {
         try {
             baseTempDir.mkdirs();
             FileUtils.cleanDirectory( baseTempDir );
-            log.info( "temp dir: " + baseTempDir );
+            log.info( baseTempDir + " ...clean.");
         }
         catch (Exception e) {
             throw new RuntimeException( e );
