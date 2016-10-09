@@ -55,10 +55,11 @@ public class ShpFeatureTableViewer
                 // skip Geometry
             }
             else {
-                addColumn( new DefaultFeatureTableColumn( prop ) );
+                DefaultFeatureTableColumn column = new DefaultFeatureTableColumn( prop );
+                column.setWeight( 1, 65 );
+                addColumn( column );
             }
         }
-        //getTable().pack( true );
     }
 
 }

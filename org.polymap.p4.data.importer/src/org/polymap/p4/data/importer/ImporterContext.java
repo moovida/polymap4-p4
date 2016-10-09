@@ -65,6 +65,7 @@ import org.polymap.p4.data.importer.kml.KMLImporterFactory;
 import org.polymap.p4.data.importer.refine.csv.CSVFileImporterFactory;
 import org.polymap.p4.data.importer.refine.excel.ExcelFileImporterFactory;
 import org.polymap.p4.data.importer.shapefile.ShpImporterFactory;
+import org.polymap.p4.data.importer.wfs.WfsImporterFactory;
 import org.polymap.p4.data.importer.wms.WmsImporterFactory;
 
 /**
@@ -87,7 +88,8 @@ public class ImporterContext
             KMLImporterFactory.class,
             GeoJSONImporterFactory.class,
             ShpImporterFactory.class,
-            WmsImporterFactory.class };
+            WmsImporterFactory.class, 
+            WfsImporterFactory.class };
     
     private Importer                        importer;
     

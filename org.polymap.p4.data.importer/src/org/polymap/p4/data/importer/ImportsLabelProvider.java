@@ -25,7 +25,6 @@ import org.eclipse.jface.viewers.ViewerCell;
 import org.polymap.core.runtime.config.Config2;
 import org.polymap.core.runtime.config.ConfigurationFactory;
 import org.polymap.core.runtime.config.Mandatory;
-
 import org.polymap.rhei.batik.BatikPlugin;
 
 import org.polymap.p4.data.importer.ImporterPrompt.Severity;

@@ -75,9 +75,9 @@ import org.polymap.p4.data.importer.Messages;
 public class WmsImporter
         implements Importer {
 
-    private static Log             log        = LogFactory.getLog( WmsImporter.class );
+    private static final Log       log = LogFactory.getLog( WmsImporter.class );
 
-    private static final IMessages i18n       = Messages.forPrefix( "WMS" );
+    private static final IMessages i18n = Messages.forPrefix( "WMS" );
 
     public static final Pattern    urlPattern = Pattern.compile( "((https?):((//)|(\\\\))+[\\w\\d:#@%/;$()~_?\\+-=\\\\\\.&]*)" );
 
@@ -261,13 +261,11 @@ public class WmsImporter
                 }
 
                 // WMS provides some more but GeoTools does not deliver more info
-                metadata.setDescription( IMetadata.Field.Publisher, normalize( new OwsMetadata().markdown( service.getContactInformation() ).toString() ) );
-                // metadata.setDescription( IMetadata.Field.Creator,
-                // normalize( new OwsMetadata().markdown(
-                // service.getContactInformation() ).toString() ) );
+                metadata.setDescription( IMetadata.Field.Publisher, 
+                        normalize( new OwsMetadata().markdown( service.getContactInformation() ).toString() ) );
 
                 metadata.setConnectionParams( WmsServiceResolver.createParams( url ) );
-            } );
+            });
             update.commit();
         }
 
