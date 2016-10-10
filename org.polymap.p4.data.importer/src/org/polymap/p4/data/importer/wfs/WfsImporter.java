@@ -15,6 +15,7 @@ package org.polymap.p4.data.importer.wfs;
 import static org.polymap.core.ui.FormDataFactory.on;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -25,6 +26,7 @@ import org.geotools.data.Query;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.simple.SimpleFeatureSource;
+import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.data.wfs.WFSDataStore;
 import org.geotools.data.wfs.WFSDataStoreFactory;
 import org.geotools.data.wfs.WFSServiceInfo;
@@ -40,6 +42,9 @@ import com.google.common.collect.Sets;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
@@ -50,6 +55,7 @@ import org.polymap.core.catalog.IUpdateableMetadataCatalog.Updater;
 import org.polymap.core.data.wfs.catalog.WfsServiceResolver;
 import org.polymap.core.runtime.UIThreadExecutor;
 import org.polymap.core.runtime.i18n.IMessages;
+import org.polymap.core.ui.FormDataFactory;
 import org.polymap.core.ui.FormLayoutFactory;
 
 import org.polymap.rhei.batik.app.SvgImageRegistryHelper;
@@ -94,7 +100,7 @@ public class WfsImporter
 
     private WFSDataStore           ds;
 
-    private SimpleFeatureSource    fs;
+    //private SimpleFeatureSource    fs;
 
     private IPanelToolkit          toolkit;
 
@@ -170,7 +176,7 @@ public class WfsImporter
 
                 if (ds.getNames().size() > 0) {
                     Name first = ds.getNames().get( 0 );
-                    fs = ds.getFeatureSource( first );
+                    SimpleFeatureSource fs = ds.getFeatureSource( first );
                     
                     // check access, fail fast in verify()
                     SimpleFeatureType schema = (SimpleFeatureType)fs.getSchema();
@@ -201,38 +207,74 @@ public class WfsImporter
     @Override
     public void createResultViewer( Composite parent, IPanelToolkit tk ) {
         this.toolkit = tk;
-        if (exception != null) {
-            tk.createFlowText( parent, "\nUnable to read the data.\n\n**Reason**: " + exception.getMessage() );
-        }
-        else if (fs == null) {
-            tk.createFlowText( parent, "\nNo FeatureSource." );
-        }
-        else {
-            try {
-                SimpleFeatureType schema = (SimpleFeatureType)fs.getSchema();
-                //log.info( "Features: " + features.size() + " : " + schema.getTypeName() );
-                // tk.createFlowText( parent, "Features: *" + features.size() + "*" );
-                
-                ShpFeatureTableViewer table = new ShpFeatureTableViewer( parent, schema );
-                table.setContentProvider( new FeatureCollectionContentProvider() );
-                
-                // XXX GeoTools shapefile impl does not handle setFirstResult() well
-                // so we can just display 100 features :(
-                Query query = new Query();
-                query.setMaxFeatures( 100 );
-                SimpleFeatureCollection content = fs.getFeatures( query );
-                table.setInput( content );
+        try {
+            if (exception != null) {
+                tk.createFlowText( parent, "\nUnable to read the data.\n\n**Reason**: " + exception.getMessage() );
             }
-            catch (Exception e) {
-                log.warn( "", e );
-                tk.createFlowText( parent, "\nUnable to read the data.\n\n**Reason**: " + e.getMessage() );
-                site.ok.set( false );
-                exception = e;
+            else if (ds.getNames().isEmpty()) {
+                tk.createFlowText( parent, "\nNo data types found." );
             }
+            else {
+                parent.setLayout( FormLayoutFactory.defaults().spacing( 5 ).create() );
+                Combo combo = tk.adapt( new Combo( parent, SWT.READ_ONLY ), false, false );
+                FormDataFactory.on( combo ).fill().noBottom();
+
+                combo.setVisibleItemCount( 8 );
+                for (Name name : (List<Name>)ds.getNames()) {
+                    combo.add( name.getLocalPart() );
+                }
+                SelectionAdapter handler = new SelectionAdapter() {
+                    private ShpFeatureTableViewer resultTable;
+
+                    @Override
+                    public void widgetSelected( SelectionEvent ev ) {
+                        if (resultTable != null) {
+                            resultTable.dispose();
+                        }
+                        resultTable = createFeatureTable( parent, tk, combo.getText() );
+                        FormDataFactory.on( resultTable.getControl() ).fill().top( combo );
+                        parent.layout( true );
+                    }
+                };
+                combo.addSelectionListener( handler );
+                combo.select( 0 );
+                handler.widgetSelected( null );
+                combo.forceFocus();
+            }
+        }
+        catch (Exception e) {
+            log.warn( "", e );
+            tk.createFlowText( parent, "\nUnable to read the data.\n\n**Reason**: " + e.getMessage() );
+            site.ok.set( false );
+            exception = e;
         }
     }
 
+    
+    protected ShpFeatureTableViewer createFeatureTable( Composite parent, IPanelToolkit tk, String typeName ) {
+        try {
+            ContentFeatureSource fs = ds.getFeatureSource( typeName );
+            SimpleFeatureType schema = (SimpleFeatureType)fs.getSchema();
 
+            ShpFeatureTableViewer table = new ShpFeatureTableViewer( parent, schema );
+            table.setContentProvider( new FeatureCollectionContentProvider() );
+
+            Query query = new Query();
+            query.setMaxFeatures( 100 );
+            SimpleFeatureCollection content = fs.getFeatures( query );
+            table.setInput( content );
+            return table;
+        }
+        catch (Exception e) {
+            log.warn( "", e );
+            tk.createFlowText( parent, "\nUnable to read the data.\n\n**Reason**: " + e.getMessage() );
+            site.ok.set( false );
+            exception = e;
+            return null;
+        }
+    }
+
+    
     @Override
     public void execute( IProgressMonitor monitor ) throws Exception {
         // create catalog entry

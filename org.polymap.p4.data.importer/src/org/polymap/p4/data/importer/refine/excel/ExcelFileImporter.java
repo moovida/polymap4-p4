@@ -21,7 +21,6 @@ import org.apache.commons.logging.LogFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.layout.FormLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 
@@ -30,6 +29,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.polymap.core.data.refine.impl.ExcelFormatAndOptions;
 import org.polymap.core.runtime.i18n.IMessages;
 import org.polymap.core.ui.FormDataFactory;
+import org.polymap.core.ui.FormLayoutFactory;
 
 import org.polymap.rhei.batik.toolkit.IPanelToolkit;
 
@@ -177,13 +177,13 @@ public class ExcelFileImporter
     public void createResultViewer( Composite parent, IPanelToolkit tk ) {
         if (sheetIn.index() == -1 && formatAndOptions().sheetRecords().size() > 1) {
             // select the correct sheet
-            parent.setLayout( new FormLayout() );
+            parent.setLayout( FormLayoutFactory.defaults().spacing( 5 ).create() );
 
             Label label = tk.createLabel( parent, i18nExcel.get( "sheets" ), SWT.LEFT );
             FormDataFactory.on( label );
 
             org.eclipse.swt.widgets.List list = tk.createList( parent, SWT.SINGLE );
-            FormDataFactory.on( list ).fill().top( label, 5 );
+            FormDataFactory.on( list ).fill().top( label );
 
             formatAndOptions().sheetRecords().forEach( record -> list.add( i18nExcel.get( "sheet", record.name, record.rows ) ) );
             if (selectedSheet != -1) {
