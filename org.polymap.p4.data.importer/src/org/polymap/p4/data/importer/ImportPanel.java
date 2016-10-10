@@ -75,8 +75,10 @@ import org.polymap.rhei.batik.toolkit.md.MdToolkit;
 
 import org.polymap.p4.P4Panel;
 import org.polymap.p4.P4Plugin;
+import org.polymap.p4.catalog.CatalogPanel;
 import org.polymap.p4.data.importer.ImportsLabelProvider.Type;
 import org.polymap.p4.data.importer.features.ImportFeaturesOperation;
+import org.polymap.p4.layer.LayersPanel;
 import org.polymap.p4.map.ProjectMapPanel;
 import org.polymap.rap.updownload.upload.IUploadHandler;
 import org.polymap.rap.updownload.upload.Upload;
@@ -118,11 +120,13 @@ public class ImportPanel
     @Override
     public boolean wantsToBeShown() {
         return parentPanel()
-                .filter( parent -> parent instanceof ProjectMapPanel )
+                .filter( parent -> parent instanceof CatalogPanel 
+                        || parent instanceof LayersPanel
+                        || parent instanceof ProjectMapPanel )
                 .map( parent -> {
                     site().title.set( "" );
                     site().tooltip.set( "Import new data into this project" );
-                    site().icon.set( ImporterPlugin.images().svgImage( "file-import.svg", P4Plugin.HEADER_ICON_CONFIG ) );
+                    site().icon.set( ImporterPlugin.images().svgImage( "database-plus.svg", P4Plugin.HEADER_ICON_CONFIG ) );
                     return true;
                 } )
                 .orElse( false );
@@ -170,9 +174,10 @@ public class ImportPanel
         // upload button
         Upload upload = null;
         if (!nextContext.isPresent()) {
-            upload = tk.adapt( new Upload( parent, SWT.NONE/* , Upload.SHOW_PROGRESS */), false, false );
-            upload.setImage( ImporterPlugin.images().svgImage( "file-import.svg", WHITE24 ) );
-            upload.setText( "" );
+            upload = tk.adapt( new Upload( parent, SWT.FLAT ) ); //, Upload.SHOW_PROGRESS ) );
+            upload.setBackground( parent.getBackground() );
+            upload.setImage( ImporterPlugin.images().svgImage( "upload.svg", WHITE24 ) );
+            upload.setText( "Upload file..." );
             upload.setToolTipText( "<b>Drop</b> files here<br/>or <b>click</b> to open file dialog" );
             upload.setHandler( this );
             upload.moveAbove( null );

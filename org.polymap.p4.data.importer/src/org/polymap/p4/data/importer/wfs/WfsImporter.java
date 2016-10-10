@@ -172,7 +172,7 @@ public class WfsImporter
                     Name first = ds.getNames().get( 0 );
                     fs = ds.getFeatureSource( first );
                     
-                    // fail fast in verify
+                    // check access, fail fast in verify()
                     SimpleFeatureType schema = (SimpleFeatureType)fs.getSchema();
                     log.info( "schema: " + schema );
                     Query query = new Query();
