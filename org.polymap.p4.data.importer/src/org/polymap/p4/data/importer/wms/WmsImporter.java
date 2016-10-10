@@ -122,8 +122,10 @@ public class WmsImporter
                     @Override
                     public void createContents( ImporterPrompt prompt, Composite parent, IPanelToolkit tk ) {
                         parent.setLayout( FormLayoutFactory.defaults().spacing( 3 ).create() );
-                        Text text = on( tk.createText( parent, url != null ? url
-                                : "", SWT.BORDER ) ).top( 0 ).left( 0 ).right( 100 ).width( 320 ).control();
+                        Text text = on( tk.createText( parent, 
+                                url != null ? url : "", 
+                                SWT.BORDER | SWT.WRAP | SWT.MULTI ) )
+                                .top( 0 ).left( 0 ).right( 100 ).width( DEFAULT_WIDTH ).height( 40 ).control();
                         text.forceFocus();
 
                         final Label msg = on( tk.createLabel( parent, "" ) ).fill().top( text ).control();
