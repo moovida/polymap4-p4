@@ -1,6 +1,6 @@
 /*
  * polymap.org 
- * Copyright (C) 2015 individual contributors as indicated by the @authors tag.
+ * Copyright (C) 2015-2016 individual contributors as indicated by the @authors tag.
  * All rights reserved.
  * 
  * This is free software; you can redistribute it and/or modify it under the terms of
@@ -49,13 +49,14 @@ import org.polymap.p4.data.importer.Messages;
 
 /**
  * 
+ * 
  * @author Joerg Reichert <joerg@mapzone.io>
  * @author <a href="http://www.polymap.de">Falko Bräutigam</a>
  */
 public abstract class FilteredListPromptUIBuilder
         implements PromptUIBuilder {
 
-    protected static final IMessages       i18n = Messages.forPrefix( "ImporterPrompt" );
+    protected static final IMessages i18n = Messages.forPrefix( "ImporterPrompt" );
     
     protected Set<String>                  items;
 
@@ -67,6 +68,10 @@ public abstract class FilteredListPromptUIBuilder
     protected abstract String initiallySelectedItem();
 
     protected abstract void handleSelection( String selectedItem );
+
+    protected abstract String description();
+
+    protected abstract String summary();
 
     
     @Override
@@ -121,6 +126,7 @@ public abstract class FilteredListPromptUIBuilder
         } );
     }
     
+    
     private void updateList( final String searchText ) {
         setListItems( filterSelectable( searchText ) );
         if (list.getItems().length > 0) {
@@ -129,10 +135,6 @@ public abstract class FilteredListPromptUIBuilder
         }
     }
 
-
-    protected abstract String description();
-
-    protected abstract String summary();
 
     protected void setListItems( List<String> filtered ) {
         String[] array = filtered.toArray( new String[ filtered.size() ] );

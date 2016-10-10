@@ -14,21 +14,16 @@
  */
 package org.polymap.p4.data.importer.kml;
 
-import java.util.Collection;
+import java.util.Iterator;
 
 import java.io.File;
-import java.io.IOException;
-
 import org.geotools.data.collection.ListFeatureCollection;
+import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.feature.FeatureCollection;
-import org.geotools.feature.FeatureIterator;
+import org.geotools.feature.collection.AbstractFeatureCollection;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.FeatureVisitor;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.util.ProgressListener;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -59,19 +54,17 @@ public class KMLImporter
 
     private static final IMessages i18n = Messages.forPrefix( "ImporterKML" );
 
-    private static final IMessages i18nPrompt = Messages.forPrefix( "ImporterPrompt" );
-
-    private ImporterSite           site;
+    private ImporterSite            site;
 
     @ContextIn
-    protected File                 kmlFile;
+    protected File                  kmlFile;
 
     @ContextOut
-    private FeatureCollection      features;
+    private FeatureCollection       features;
 
-    private Exception              exception;
+    private Exception               exception;
 
-    private SchemaNamePrompt       schemaNamePrompt;
+    private SchemaNamePrompt        schemaNamePrompt;
 
 
     @Override
@@ -92,24 +85,20 @@ public class KMLImporter
 
     @Override
     public void createPrompts( IProgressMonitor monitor ) throws Exception {
-        schemaNamePrompt = new SchemaNamePrompt( site, i18nPrompt.get("schemaSummary"), i18nPrompt.get( "schemaDescription" ), () -> {
-            return FilenameUtils.getBaseName( kmlFile.getName() );
-        } );
+        schemaNamePrompt = new SchemaNamePrompt( site, FilenameUtils.getBaseName( kmlFile.getName() ) );
     }
 
 
     @Override
     public void verify( IProgressMonitor monitor ) {
-        // System.err.println( "verify " + System.currentTimeMillis() );
-        KMLFeatureIterator featureIterator = null;
-        try {
-            featureIterator = new KMLFeatureIterator( kmlFile, schemaNamePrompt.selection() );
+        try (
+            KMLFeatureIterator featureIterator = new KMLFeatureIterator( kmlFile, schemaNamePrompt.selection() );
+        ){
             ListFeatureCollection featureList = new ListFeatureCollection( featureIterator.getFeatureType() );
-            int i = 0;
-            while (i < 100 && featureIterator.hasNext()) {
+
+            for (int i=0; i < 100 && featureIterator.hasNext(); i++) {
                 SimpleFeature next = featureIterator.next();
                 featureList.add( next );
-                i++;
             }
             features = featureList;
             site.ok.set( true );
@@ -119,12 +108,6 @@ public class KMLImporter
             site.ok.set( false );
             exception = e;
         }
-        finally {
-            if (featureIterator != null) {
-                featureIterator.close();
-            }
-        }
-        // System.err.println( "verify done " + System.currentTimeMillis() );
     }
 
 
@@ -145,95 +128,24 @@ public class KMLImporter
 
     @Override
     public void execute( IProgressMonitor monitor ) throws Exception {
-        final KMLFeatureIterator featureIterator = new KMLFeatureIterator( kmlFile, schemaNamePrompt.selection() );
-        final SimpleFeatureType schema = featureIterator.getFeatureType();
-        features = new FeatureCollection<SimpleFeatureType,SimpleFeature>() {
-
+        KMLFeatureIterator featureIterator = new KMLFeatureIterator( kmlFile, schemaNamePrompt.selection() );
+        SimpleFeatureType schema = featureIterator.getFeatureType();
+        
+        SimpleFeatureCollection coll = new AbstractFeatureCollection( schema ) {
             @Override
-            public FeatureIterator<SimpleFeature> features() {
-                try {
-                    return featureIterator;
-                }
-                catch (Exception e) {
-                    throw new RuntimeException( e );
-                }
+            protected Iterator<SimpleFeature> openIterator() {
+                return featureIterator;
             }
-
-
-            @Override
-            public SimpleFeatureType getSchema() {
-                return schema;
-            }
-
-
-            @Override
-            public String getID() {
-                return null;
-            }
-
-
-            @Override
-            public void accepts( FeatureVisitor visitor, ProgressListener progress ) throws IOException {
-                FeatureIterator<SimpleFeature> iterator = features();
-                while (iterator.hasNext()) {
-                    visitor.visit( iterator.next() );
-                }
-            }
-
-
-            @Override
-            public FeatureCollection<SimpleFeatureType,SimpleFeature> subCollection( Filter filter ) {
-                throw new RuntimeException( "not yet implemented." );
-            }
-
-
-            @Override
-            public FeatureCollection<SimpleFeatureType,SimpleFeature> sort( SortBy order ) {
-                throw new RuntimeException( "not yet implemented." );
-            }
-
-
-            @Override
-            public ReferencedEnvelope getBounds() {
-                throw new RuntimeException( "not yet implemented." );
-            }
-
-
-            @Override
-            public boolean contains( Object o ) {
-                throw new RuntimeException( "not yet implemented." );
-            }
-
-
-            @Override
-            public boolean containsAll( Collection o ) {
-                throw new RuntimeException( "not yet implemented." );
-            }
-
-
-            @Override
-            public boolean isEmpty() {
-                return false;
-            }
-
-
             @Override
             public int size() {
-                throw new RuntimeException( "not yet implemented." );
+                throw new UnsupportedOperationException();
             }
-
-
             @Override
-            public Object[] toArray() {
-                throw new RuntimeException( "not yet implemented." );
+            public ReferencedEnvelope getBounds() {
+                throw new UnsupportedOperationException();
             }
-
-
-            @Override
-            public Object[] toArray( Object[] a ) {
-                throw new RuntimeException( "not yet implemented." );
-            }
-
         };
+
+        features = schemaNamePrompt.retypeFeatures( coll, kmlFile.getName() );
     }
 }

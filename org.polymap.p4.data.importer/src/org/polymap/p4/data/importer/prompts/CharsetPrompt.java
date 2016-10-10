@@ -53,15 +53,15 @@ import org.polymap.p4.data.importer.Messages;
  */
 public class CharsetPrompt {
 
-    private static final IMessages i18n       = Messages.forPrefix( "CharsetPrompt" );
+    private static final IMessages i18n = Messages.forPrefix( "CharsetPrompt" );
 
     private static final IMessages i18nPrompt = Messages.forPrefix( "ImporterPrompt" );
 
-    private static final String    SEPARATOR  = "";
+    private static final String    SEPARATOR = "";
 
-    public static Charset          DEFAULT    = StandardCharsets.ISO_8859_1;
+    public static Charset          DEFAULT = StandardCharsets.ISO_8859_1;
 
-    private Charset                selection  = null;
+    private Charset                selection;
 
     /** displayName -> charset */
     private Map<String,Charset>    charsets;

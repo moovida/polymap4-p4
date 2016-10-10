@@ -14,6 +14,7 @@
  */
 package org.polymap.p4.data.importer.geojson;
 
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import java.io.File;
@@ -36,7 +37,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
  * @author Steffen Stundzig
  */
 public class GeoJSONFeatureIterator
-        implements FeatureIterator<SimpleFeature> {
+        implements FeatureIterator<SimpleFeature>, Iterator<SimpleFeature> {
 
     private FeatureIterator<SimpleFeature> underlying = null;
 

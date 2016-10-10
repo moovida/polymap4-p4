@@ -53,7 +53,7 @@ public interface Importer {
     /**
      * Verifies the data/context and the state of the prompts. This is called when a
      * prompt has changed its status. This method may update the prompts, should set
-     * {@link ImporterSite#ok} and prepare contents of the
+     * {@link ImporterSite#ok} and prepare contents for the
      * {@link #createResultViewer(Composite)}.
      *
      * @param monitor

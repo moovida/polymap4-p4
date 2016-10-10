@@ -20,6 +20,7 @@ import java.util.Set;
 import java.io.File;
 
 import org.geotools.data.collection.ListFeatureCollection;
+import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.NameImpl;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
@@ -85,30 +86,27 @@ import org.polymap.p4.data.importer.shapefile.ShpFeatureTableViewer;
 public abstract class AbstractRefineFileImporter<T extends FormatAndOptions>
         implements Importer {
 
-    protected static final IMessages     i18nPrompt          = Messages.forPrefix( "ImporterPrompt" );
+    private static final Log log = LogFactory.getLog( AbstractRefineFileImporter.class );
 
-    protected static final IMessages     i18nRefine          = Messages.forPrefix( "ImporterRefine" );
+    protected static final IMessages     i18nPrompt = Messages.forPrefix( "ImporterPrompt" );
+
+    protected static final IMessages     i18nRefine = Messages.forPrefix( "ImporterRefine" );
 
     /*
      * GeometryFactory will be used to create the geometry attribute of each feature
      * (a Point object for the location)
      */
-    private final static GeometryFactory GEOMETRYFACTORY     = JTSFactoryFinder.getGeometryFactory( null );
+    private final static GeometryFactory GEOMETRYFACTORY = JTSFactoryFinder.getGeometryFactory( null );
 
     // all known synonyms for longitude in lower case in all languages
     // TODO: this should be part of a *longitude synonym registry* in the user
     // settings too, to better support frequent uploads
     // each user selected columnname for longitude and latitude should be saved in
     // this user settings
-    private static final Set<String>     LONGITUDES          = Sets.newHashSet( "geo_longitude", "lon", "longitude",
-                                                                     "geo_x", "x" );
+    private static final Set<String>     LONGITUDES = Sets.newHashSet( "geo_longitude", "lon", "longitude", "geo_x", "x" );
 
     // all known synonyms for latitude in lower case in all languages
-    private static final Set<String>     LATITUDES           = Sets.newHashSet( "geo_latitude", "lat", "latitude",
-                                                                     "geo_y",
-                                                                     "y" );
-
-    private static Log                   log                 = LogFactory.getLog( AbstractRefineFileImporter.class );
+    private static final Set<String>     LATITUDES = Sets.newHashSet( "geo_latitude", "lat", "latitude", "geo_y", "y" );
 
     protected ImporterSite               site;
 
@@ -137,12 +135,10 @@ public abstract class AbstractRefineFileImporter<T extends FormatAndOptions>
 
     private boolean                      shouldUpdateOptions = false;
 
-    private CrsPrompt crsPrompt;
+    private CrsPrompt                    crsPrompt;
 
-    private SchemaNamePrompt schemaNamePrompt;
+    private SchemaNamePrompt             schemaNamePrompt;
 
-
-    // private Composite tableComposite;
 
     @Override
     public ImporterSite site() {
@@ -167,7 +163,6 @@ public abstract class AbstractRefineFileImporter<T extends FormatAndOptions>
 
     @Override
     public void execute( IProgressMonitor monitor ) throws Exception {
-
         // create all params for contextOut
         // use the typed column from the preview and cancel the import create a
         project = service.createProject( importJob, formatAndOptions, monitor );
@@ -175,7 +170,7 @@ public abstract class AbstractRefineFileImporter<T extends FormatAndOptions>
         typedContent = null;
         // log.info( "project has rows: " + project.rows.size() );
         // TODO MONITOR for the features
-        features = createFeatures();
+        features = schemaNamePrompt.retypeFeatures( createFeatures(), file.getName() );
     }
 
 
@@ -197,13 +192,11 @@ public abstract class AbstractRefineFileImporter<T extends FormatAndOptions>
             return null;
         });
         
-        schemaNamePrompt = new SchemaNamePrompt( site, i18nPrompt.get("schemaSummary"), i18nPrompt.get( "schemaDescription" ), () -> {
-            return layerName();
-        });
+        schemaNamePrompt = new SchemaNamePrompt( site, layerName() );
     }
     
     
-    private FeatureCollection createFeatures() {
+    private SimpleFeatureCollection createFeatures() {
         TypedContent content = typedContent();
         
         int latitudeColumnIndex = content.columnIndex( latitudeColumn() );

@@ -14,6 +14,7 @@
  */
 package org.polymap.p4.data.importer.kml;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -44,15 +45,15 @@ import com.google.common.collect.Lists;
  * @author Steffen Stundzig
  */
 public class KMLFeatureIterator
-        implements FeatureIterator<SimpleFeature> {
+        implements FeatureIterator<SimpleFeature>, Iterator<SimpleFeature> {
 
-    final SimpleFeatureType   type;
+    private SimpleFeatureType   type;
 
-    private SimpleFeature     f = null;
+    private SimpleFeature       f;
 
-    private PullParser        parser;
+    private PullParser          parser;
 
-    private final InputStream fis;
+    private final InputStream   fis;
 
 
     public KMLFeatureIterator( final File file, final String schemaName ) throws IOException {
@@ -108,6 +109,7 @@ public class KMLFeatureIterator
      * @throws NoSuchElementException Check hasNext() to avoid reading off the end of
      *         the file
      */
+    @Override
     public SimpleFeature next() throws NoSuchElementException {
         if (!hasNext()) {
             throw new NoSuchElementException();
@@ -128,6 +130,7 @@ public class KMLFeatureIterator
     }
 
 
+    @Override
     public boolean hasNext() {
         return f != null;
     }
@@ -139,6 +142,7 @@ public class KMLFeatureIterator
      * 
      * @throws IOException
      */
+    @Override
     public void close() {
         try {
             fis.close();

@@ -14,7 +14,7 @@
  */
 package org.polymap.p4.data.importer.geojson;
 
-import java.util.Collection;
+import java.util.Iterator;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -23,19 +23,15 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 
 import org.geotools.data.collection.ListFeatureCollection;
+import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.feature.FeatureCollection;
-import org.geotools.feature.FeatureIterator;
+import org.geotools.feature.collection.AbstractFeatureCollection;
 import org.geotools.geojson.feature.FeatureJSON;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
-import org.opengis.feature.FeatureVisitor;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.sort.SortBy;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.util.ProgressListener;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -111,50 +107,16 @@ public class GeoJSONImporter
         // charset prompt
         charsetPrompt = new CharsetPrompt( site, i18nPrompt.get("encodingSummary"), i18nPrompt.get( "encodingDescription" ), () -> {
             return Charset.forName( "UTF-8" );
-        } );
+        });
         // http://geojson.org/geojson-spec.html#coordinate-reference-system-objects
         crsPrompt = new CrsPrompt( site, i18nPrompt.get("crsSummary"), i18nPrompt.get( "crsDescription" ), () -> {
-                    return getPredefinedCRS();
-                } );
-        schemaNamePrompt = new SchemaNamePrompt( site, i18nPrompt.get("schemaSummary"), i18nPrompt.get( "schemaDescription" ), () -> {
-            return FilenameUtils.getBaseName( geojsonFile.getName() );
-        } );
+            return getPredefinedCRS();
+        });
+        schemaNamePrompt = new SchemaNamePrompt( site, FilenameUtils.getBaseName( geojsonFile.getName() ) );
     }
 
 
-    @Override
-    public void verify( IProgressMonitor monitor ) {
-        if (featureIterator != null) {
-            featureIterator.close();
-        }
-        featureIterator = new GeoJSONFeatureIterator( geojsonFile, charsetPrompt.selection(), schemaNamePrompt.selection(), crsPrompt.selection(), monitor );
-        try {
-
-            ListFeatureCollection featureList = new ListFeatureCollection( featureIterator.getFeatureType() );
-            int i = 0;
-            while (i < 100 && featureIterator.hasNext()) {
-                SimpleFeature next = featureIterator.next();
-                featureList.add( next );
-                i++;
-            }
-            features = featureList;
-            site.ok.set( true );
-            exception = null;
-        }
-        catch (Exception e) {
-            site.ok.set( false );
-            exception = e;
-            e.printStackTrace();
-        }
-        finally {
-            if (featureIterator != null) {
-                featureIterator.close();
-            }
-        }
-    }
-
-
-    CoordinateReferenceSystem getPredefinedCRS() {
+    protected CoordinateReferenceSystem getPredefinedCRS() {
         CoordinateReferenceSystem predefinedCRS = null;
         InputStreamReader isr = null;
         try {
@@ -188,6 +150,35 @@ public class GeoJSONImporter
 
 
     @Override
+    public void verify( IProgressMonitor monitor ) {
+        if (featureIterator != null) {
+            featureIterator.close();
+        }
+        featureIterator = new GeoJSONFeatureIterator( geojsonFile, charsetPrompt.selection(), schemaNamePrompt.selection(), crsPrompt.selection(), monitor );
+        try {
+            ListFeatureCollection featureList = new ListFeatureCollection( featureIterator.getFeatureType() );
+            for (int i=0; i < 100 && featureIterator.hasNext(); i++) {
+                SimpleFeature next = featureIterator.next();
+                featureList.add( next );
+            }
+            features = featureList;
+            site.ok.set( true );
+            exception = null;
+        }
+        catch (Exception e) {
+            site.ok.set( false );
+            exception = e;
+            e.printStackTrace();
+        }
+        finally {
+            if (featureIterator != null) {
+                featureIterator.close();
+            }
+        }
+    }
+
+
+    @Override
     public void createResultViewer( Composite parent, IPanelToolkit toolkit ) {
         if (exception != null) {
             toolkit.createFlowText( parent, "\nUnable to read the data.\n\n" + "**Reason**: "
@@ -206,96 +197,25 @@ public class GeoJSONImporter
     public void execute( IProgressMonitor monitor ) throws Exception {
         // must be created in verify before
         featureIterator.reset();
-        features = new FeatureCollection() {
-
+        
+        SimpleFeatureType schema = featureIterator.getFeatureType();
+        
+        SimpleFeatureCollection coll = new AbstractFeatureCollection( schema ) {
             @Override
-            public FeatureIterator features() {
+            protected Iterator<SimpleFeature> openIterator() {
                 return featureIterator;
             }
-
-
-            @Override
-            public FeatureType getSchema() {
-                return featureIterator.getFeatureType();
-            }
-
-
-            @Override
-            public String getID() {
-                return null;
-            }
-
-
-            @Override
-            public void accepts( FeatureVisitor visitor, ProgressListener progress ) throws IOException {
-                FeatureIterator iterator = features();
-                while (iterator.hasNext()) {
-                    visitor.visit( iterator.next() );
-                }
-            }
-
-
-            @Override
-            public FeatureCollection subCollection( Filter filter ) {
-                // TODO Auto-generated method stub
-                throw new RuntimeException( "not yet implemented." );
-            }
-
-
-            @Override
-            public FeatureCollection sort( SortBy order ) {
-                // TODO Auto-generated method stub
-                throw new RuntimeException( "not yet implemented." );
-            }
-
-
-            @Override
-            public ReferencedEnvelope getBounds() {
-                // TODO Auto-generated method stub
-                throw new RuntimeException( "not yet implemented." );
-            }
-
-
-            @Override
-            public boolean contains( Object o ) {
-                // TODO Auto-generated method stub
-                throw new RuntimeException( "not yet implemented." );
-            }
-
-
-            @Override
-            public boolean containsAll( Collection o ) {
-                // TODO Auto-generated method stub
-                throw new RuntimeException( "not yet implemented." );
-            }
-
-
-            @Override
-            public boolean isEmpty() {
-                return false;
-            }
-
-
             @Override
             public int size() {
-                // TODO Auto-generated method stub
-                throw new RuntimeException( "not yet implemented." );
+                throw new UnsupportedOperationException();
             }
-
-
             @Override
-            public Object[] toArray() {
-                // TODO Auto-generated method stub
-                throw new RuntimeException( "not yet implemented." );
+            public ReferencedEnvelope getBounds() {
+                throw new UnsupportedOperationException();
             }
-
-
-            @Override
-            public Object[] toArray( Object[] a ) {
-                // TODO Auto-generated method stub
-                throw new RuntimeException( "not yet implemented." );
-            }
-
         };
+
+        features = schemaNamePrompt.retypeFeatures( coll, geojsonFile.getName() );
     }
+    
 }
