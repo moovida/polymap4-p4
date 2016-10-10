@@ -1,6 +1,6 @@
 /* 
  * polymap.org
- * Copyright (C) 2015, Falko Bräutigam. All rights reserved.
+ * Copyright (C) 2015-2016, Falko Bräutigam. All rights reserved.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -73,10 +73,9 @@ public class ImportFeaturesOperation
     /**
      * The resource id of the newly created schema. 
      */
-    public String resourceIdentifier() {
-        IResolvableInfo info = P4Plugin.localCatalog().localFeaturesStoreInfo();
-        IResourceInfo res = ((RServiceInfo)info.getServiceInfo()).resource( fs );
-        return P4Plugin.allResolver().resourceIdentifier( res );
+    public IResourceInfo resource() {
+        IResolvableInfo fsInfo = P4Plugin.localCatalog().localFeaturesStoreInfo();
+        return ((RServiceInfo)fsInfo.getServiceInfo()).resource( fs );
     }
 
     

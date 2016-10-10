@@ -41,7 +41,7 @@ class MetadataIconProvider
     public void update( ViewerCell cell ) {
         Object elm = cell.getElement();
         if (elm instanceof IMetadataCatalog) {
-            cell.setImage( P4Plugin.images().svgImage( "book-open-variant.svg", NORMAL24 ) );
+            cell.setImage( P4Plugin.images().svgImage( "book-open-page-variant.svg", NORMAL24 ) );
         }
         else if (elm instanceof LocalMetadata) {
             if (((LocalMetadata)elm).getIdentifier().equals( LocalCatalog.LOCAL_FEATURES_STORE_ID )) {

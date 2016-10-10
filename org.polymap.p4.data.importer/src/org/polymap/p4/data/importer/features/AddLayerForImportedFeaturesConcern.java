@@ -97,7 +97,7 @@ public class AddLayerForImportedFeaturesConcern
             IStatus result = info.next().execute( monitor, a );
             if (result.isOK()) {
                 UIThreadExecutor.asyncFast( () -> {
-                    new SimpleDialog().title.put( "Features imported" )
+                    new SimpleDialog().title.put( "Create new layer" )
                             .setContents( parent -> {
                                 parent.setLayout( ColumnLayoutFactory.defaults().columns( 1, 1 ).spacing( 0 ).create() );
                                 Label msg = new Label( parent, SWT.WRAP );
@@ -132,7 +132,7 @@ public class AddLayerForImportedFeaturesConcern
 
             NewLayerOperation op = new NewLayerOperation()
                     .label.put( input.getText() )
-                    .resId.put( delegate.resourceIdentifier() )
+                    .res.put( delegate.resource() )
                     .featureStyle.put( featureStyle )
                     .uow.put( ProjectRepository.unitOfWork() )
                     .map.put( map.get() );

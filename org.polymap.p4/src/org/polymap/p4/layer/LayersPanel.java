@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
 import java.beans.PropertyChangeEvent;
 
 import org.opengis.feature.simple.SimpleFeatureType;
@@ -62,14 +63,15 @@ import org.polymap.core.ui.SelectionAdapter;
 import org.polymap.core.ui.StatusDispatcher;
 import org.polymap.core.ui.StatusDispatcher.Style;
 
+import org.polymap.rhei.batik.BatikPlugin;
 import org.polymap.rhei.batik.Context;
 import org.polymap.rhei.batik.Mandatory;
 import org.polymap.rhei.batik.PanelIdentifier;
 import org.polymap.rhei.batik.Scope;
+import org.polymap.rhei.batik.app.SvgImageRegistryHelper;
 import org.polymap.rhei.batik.toolkit.md.ActionProvider;
 import org.polymap.rhei.batik.toolkit.md.CheckboxActionProvider;
 import org.polymap.rhei.batik.toolkit.md.MdListViewer;
-import org.polymap.rhei.batik.toolkit.md.MdToolkit;
 
 import org.polymap.p4.Messages;
 import org.polymap.p4.P4Panel;
@@ -133,11 +135,11 @@ public class LayersPanel
         site().title.set( i18n.get( "title" ) );
         parent.setLayout( FormLayoutFactory.defaults().create() );
         
-        viewer = ((MdToolkit)getSite().toolkit()).createListViewer( parent, SWT.SINGLE, SWT.FULL_SELECTION );
+        viewer = tk().createListViewer( parent, SWT.SINGLE, SWT.FULL_SELECTION );
         viewer.setContentProvider( new ProjectNodeContentProvider() );
 
-        viewer.firstLineLabelProvider.set( new ProjectNodeLabelProvider( Label ) );
-        viewer.secondLineLabelProvider.set( new ProjectNodeLabelProvider( Description ) );
+        viewer.firstLineLabelProvider.set( new ProjectNodeLabelProvider( Label ).abbreviate.put( 35 ) );
+        viewer.secondLineLabelProvider.set( new ProjectNodeLabelProvider( Description ).abbreviate.put( 35 ) );
         viewer.iconProvider.set( new LayerIconProvider() );
         
         viewer.firstSecondaryActionProvider.set( new LayerVisibleAction());
@@ -218,6 +220,11 @@ public class LayersPanel
     protected final class LayerVisibleAction
             extends CheckboxActionProvider {
     
+        public LayerVisibleAction() {
+            super( P4Plugin.images().svgImage( "eye.svg", SvgImageRegistryHelper.NORMAL24 ),
+                    BatikPlugin.images().svgImage( "checkbox-blank-circle-outline.svg", NORMAL24 ) );
+        }
+
         @Override
         protected boolean initSelection( MdListViewer _viewer, Object elm ) {
             try {
@@ -232,6 +239,7 @@ public class LayersPanel
             }
             catch (Exception e) {
                 log.warn( "", e );
+                return false;
             }
             
             return ((ILayer)elm).userSettings.get().visible.get();

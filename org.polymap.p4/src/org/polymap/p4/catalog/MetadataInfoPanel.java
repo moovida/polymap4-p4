@@ -162,7 +162,7 @@ public class MetadataInfoPanel
         public void update( ViewerCell cell ) {
             Object elm = cell.getElement();
             if (elm instanceof IResourceInfo) {
-                cell.setImage( P4Plugin.images().svgImage( "plus-circle-outline.svg", SvgImageRegistryHelper.OK24 ) );
+                cell.setImage( P4Plugin.images().svgImage( "plus-circle.svg", SvgImageRegistryHelper.OK24 ) );
             }
         }
 

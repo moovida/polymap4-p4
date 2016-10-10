@@ -66,6 +66,18 @@ public class LocalCatalog
     }
 
     
+    @Override
+    public String getTitle() {
+        return "Project's data sources";
+    }
+
+
+    @Override
+    public String getDescription() {
+        return "Data sources of this local project";
+    }
+
+
     /**
      * Returns the one and only 'local' store for features in this P4 instance.
      */

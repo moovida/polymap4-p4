@@ -23,15 +23,19 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.OpenEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.jface.viewers.ViewerCell;
 
 import org.polymap.core.catalog.IMetadata;
 import org.polymap.core.catalog.resolve.IResourceInfo;
 import org.polymap.core.catalog.ui.MetadataDescriptionProvider;
 import org.polymap.core.catalog.ui.MetadataLabelProvider;
+import org.polymap.core.project.IMap;
 import org.polymap.core.ui.FormDataFactory;
 import org.polymap.core.ui.FormLayoutFactory;
 import org.polymap.core.ui.SelectionAdapter;
+import org.polymap.core.ui.StatusDispatcher;
 
+import org.polymap.rhei.batik.BatikApplication;
 import org.polymap.rhei.batik.Context;
 import org.polymap.rhei.batik.PanelIdentifier;
 import org.polymap.rhei.batik.Scope;
@@ -40,11 +44,13 @@ import org.polymap.rhei.batik.toolkit.ActionText;
 import org.polymap.rhei.batik.toolkit.ClearTextAction;
 import org.polymap.rhei.batik.toolkit.TextActionItem;
 import org.polymap.rhei.batik.toolkit.TextActionItem.Type;
+import org.polymap.rhei.batik.toolkit.md.ActionProvider;
 import org.polymap.rhei.batik.toolkit.md.MdListViewer;
 import org.polymap.rhei.batik.toolkit.md.MdToolkit;
 
 import org.polymap.p4.P4Panel;
 import org.polymap.p4.P4Plugin;
+import org.polymap.p4.layer.NewLayerContribution;
 import org.polymap.p4.map.ProjectMapPanel;
 
 /**
@@ -68,15 +74,19 @@ public class CatalogPanel
     @Scope( P4Plugin.Scope )
     private Context<IMetadata>          selectedMetadata;
     
+    /** Inbound: */
+    @Scope( P4Plugin.Scope )
+    private Context<IMap>               map;
     
+
     @Override
     public boolean wantsToBeShown() {
         return parentPanel()
                 .filter( parent -> parent instanceof ProjectMapPanel )
                 .map( parent -> {
                     site().title.set( "" );
-                    site().tooltip.set( "Data catalogs" );
-                    site().icon.set( P4Plugin.images().svgImage( "book-open-page-variant.svg", P4Plugin.HEADER_ICON_CONFIG ) );
+                    site().tooltip.set( "Catalogs of data sources" );
+                    site().icon.set( P4Plugin.images().svgImage( "database.svg", P4Plugin.HEADER_ICON_CONFIG ) );
                     return true;
                 })
                 .orElse( false );
@@ -95,6 +105,7 @@ public class CatalogPanel
         viewer.firstLineLabelProvider.set( new MetadataLabelProvider() );
         viewer.secondLineLabelProvider.set( new MetadataDescriptionProvider() );
         viewer.iconProvider.set( new MetadataIconProvider() );
+        viewer.firstSecondaryActionProvider.set( new CreateLayerAction() );
         viewer.addOpenListener( this );
         viewer.setInput( P4Plugin.catalogs() );
 
@@ -143,6 +154,35 @@ public class CatalogPanel
                 viewer.toggleItemExpand( elm );
             }
         });
+    }
+
+    
+    /**
+     * 
+     */
+    protected class CreateLayerAction
+            extends ActionProvider {
+
+        @Override
+        public void update( ViewerCell cell ) {
+            Object elm = cell.getElement();
+            if (elm instanceof IResourceInfo) {
+                cell.setImage( P4Plugin.images().svgImage( "plus-circle.svg", SvgImageRegistryHelper.OK24 ) );
+            }
+        }
+
+        @Override
+        public void perform( @SuppressWarnings( "hiding" ) MdListViewer viewer, Object elm ) {
+            IResourceInfo res = (IResourceInfo)elm;
+            NewLayerContribution.createLayer( res, map.get(), ev -> {
+                if (ev.getResult().isOK()) {
+                    BatikApplication.instance().getContext().closePanel( site().path() );
+                }
+                else {
+                    StatusDispatcher.handleError( "Unable to create new layer.", ev.getResult().getException() );
+                }
+            });
+        }    
     }
 
 }

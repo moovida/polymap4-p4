@@ -16,6 +16,9 @@ package org.polymap.p4.catalog;
 
 import java.io.CharArrayWriter;
 import java.text.DateFormat;
+
+import org.apache.commons.lang3.StringUtils;
+
 import com.google.common.base.Joiner;
 
 import org.eclipse.swt.SWT;
@@ -50,7 +53,6 @@ public class MetadataInfoDashlet
 
 
     public MetadataInfoDashlet( IMetadata md ) {
-        super();
         this.md = md;
     }
 
@@ -76,7 +78,11 @@ public class MetadataInfoDashlet
             });
         });
         markdown.paragraph( () -> {
-            markdown.add( md.getDescription().orElse( null ) );
+            String description = md.getDescription().orElse( null );
+            if (description != null) {
+                description = StringUtils.abbreviate( description, 500 );
+            }
+            markdown.add( description );
         });
 //        markdown.paragraph( () -> {
 //            DateFormat df = SimpleDateFormat.getDateInstance( SimpleDateFormat.MEDIUM, RWT.getLocale() );
