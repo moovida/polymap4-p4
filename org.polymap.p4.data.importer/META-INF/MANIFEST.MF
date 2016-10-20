@@ -17,16 +17,7 @@ Require-Bundle: org.polymap.core.data;bundle-version="4.0.0",
  org.junit;bundle-version="4.11.0";resolution:=optional
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
-Bundle-ClassPath: lib/commons-compress-1.9.jar,
- .,
- lib/gt-api-13.2.jar,
- lib/gt-main-13.2.jar,
- lib/gt-metadata-13.2.jar,
- lib/gt-opengis-13.2.jar,
- lib/gt-referencing-13.2.jar,
- lib/gt-xsd-core-13.2.jar,
- lib/gt-xsd-kml-13.2.jar,
- lib/picocontainer-1.2.jar,
- lib/xml-apis-1.0.b2.jar,
- lib/xsd-2.6.0.jar
+Bundle-ClassPath: .,
+ lib/commons-compress-1.9.jar,
+ lib/gt-xsd-kml-16-RC1.jar
 Export-Package: org.polymap.p4.data.importer

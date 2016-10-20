@@ -6,7 +6,7 @@
  -->
 <project name="org.polymap.p4.data.importer" default="build" basedir="." xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 	<description>Download open source jars from the internet.</description>
-	<property name="geotools.version" value="13.2" />
+	<property name="geotools.version" value="16-RC1" />
 
 	<property name="lib" value="${basedir}${file.separator}lib" />
 	<property name="libs_src_dir" value="${lib}${file.separator}sources" />

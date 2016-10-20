@@ -155,7 +155,7 @@ public class WmsImporter
     public void verify( IProgressMonitor monitor ) {
         try {
             if (url != null) {
-                wms = new WebMapServer( new URL( url ), 5 );
+                wms = new WebMapServer( new URL( url ), 10 );
                 WMSCapabilities capabilities = wms.getCapabilities();
                 String title = capabilities.getService().getTitle();
                 log.info( "Service title: " + title );
