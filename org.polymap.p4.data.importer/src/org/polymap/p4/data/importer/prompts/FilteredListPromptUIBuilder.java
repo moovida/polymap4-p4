@@ -84,7 +84,7 @@ public abstract class FilteredListPromptUIBuilder
         items = listItems();
         String initiallySelected = initiallySelectedItem();
         if (StringUtils.isBlank( initiallySelected )) {
-            initiallySelected = i18n.get("filterAction");
+            initiallySelected = i18n.get( "filterAction" );
         }
         
         Label label = on( tk.createLabel( parent, summary(), SWT.NONE ) ).fill().top( desc, 15 ).noBottom().control();

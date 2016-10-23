@@ -13,23 +13,18 @@
  */
 package org.polymap.p4.data.importer.shapefile;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
-import java.nio.charset.Charset;
 import static org.apache.commons.io.FileUtils.readFileToString;
+import static org.apache.commons.io.FilenameUtils.getBaseName;
 import static org.apache.commons.io.FilenameUtils.getExtension;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
-
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.swt.widgets.Composite;
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+import java.nio.charset.Charset;
 
 import org.geotools.data.Query;
 import org.geotools.data.shapefile.ShapefileDataStore;
@@ -41,6 +36,16 @@ import org.geotools.feature.FeatureCollection;
 import org.geotools.referencing.ReferencingFactoryFinder;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
+import org.opengis.referencing.crs.CRSFactory;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.eclipse.swt.widgets.Composite;
+
+import org.eclipse.core.runtime.IProgressMonitor;
 
 import org.polymap.core.runtime.Streams;
 import org.polymap.core.runtime.Streams.ExceptionCollector;
@@ -49,6 +54,7 @@ import org.polymap.core.runtime.i18n.IMessages;
 import org.polymap.rhei.batik.app.SvgImageRegistryHelper;
 import org.polymap.rhei.batik.toolkit.IPanelToolkit;
 import org.polymap.rhei.table.FeatureCollectionContentProvider;
+
 import org.polymap.p4.data.importer.ContextIn;
 import org.polymap.p4.data.importer.ContextOut;
 import org.polymap.p4.data.importer.Importer;
@@ -67,9 +73,11 @@ import org.polymap.p4.data.importer.prompts.SchemaNamePrompt;
 public class ShpImporter
         implements Importer {
 
-    private static final IMessages                 i18nPrompt = Messages.forPrefix( "ImporterPrompt" );
+    private static final Log log = LogFactory.getLog( ShpImporter.class );
 
-    private static final IMessages                 i18n = Messages.forPrefix( "ImporterShp" );
+    private static final IMessages i18nPrompt = Messages.forPrefix( "ImporterPrompt" );
+
+    private static final IMessages i18n = Messages.forPrefix( "ImporterShp" );
 
     private static final ShapefileDataStoreFactory dsFactory  = new ShapefileDataStoreFactory();
 
@@ -127,25 +135,33 @@ public class ShpImporter
             return crs;
         });
         
-        crsPrompt = new CrsPrompt( site, i18nPrompt.get("crsSummary"), i18nPrompt.get( "crsDescription" ), () -> {
-            Optional<File> prjFile = files.stream().filter( f -> "prj".equalsIgnoreCase( FilenameUtils.getExtension( f.getName() ) ) ).findAny();
-            if (prjFile.isPresent()) {
-                try {
-                    // encoding used in geotools' PrjFileReader
-                    String wkt = FileUtils.readFileToString( prjFile.get(), Charset.forName( "ISO-8859-1" ) );
-                    return ReferencingFactoryFinder.getCRSFactory( null ).createFromWKT( wkt );
-                }
-                catch (Exception e) {
-                    throw new RuntimeException( e );
-                }
-            }
-            return null;
-        });
+        crsPrompt = new CrsPrompt( site, defaultCrs() );
         
-        schemaNamePrompt = new SchemaNamePrompt( site, FilenameUtils.getBaseName( shp.getName() ) );
+        schemaNamePrompt = new SchemaNamePrompt( site, getBaseName( shp.getName() ) );
     }
 
+    
+    protected CoordinateReferenceSystem defaultCrs() {
+        return files.stream()
+                .filter( f -> "prj".equalsIgnoreCase( getExtension( f.getName() ) ) )
+                .findAny()
+                .map( prjFile -> {
+                    try {
+                        // encoding used in geotools' PrjFileReader
+                        String wkt = FileUtils.readFileToString( prjFile, Charset.forName( "ISO-8859-1" ) );
+                        CRSFactory factory = ReferencingFactoryFinder.getCRSFactory( null );
+                        CoordinateReferenceSystem result = factory.createFromWKT( wkt );
+                        return result;
+                    }
+                    catch (Exception e) {
+                        log.warn( "", e );
+                        return null;
+                    }
+                })
+                .orElse( null );
+    }
 
+    
     @Override
     public void verify( IProgressMonitor monitor ) {
         try {

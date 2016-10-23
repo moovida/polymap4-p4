@@ -109,14 +109,12 @@ public class GeoJSONImporter
             return Charset.forName( "UTF-8" );
         });
         // http://geojson.org/geojson-spec.html#coordinate-reference-system-objects
-        crsPrompt = new CrsPrompt( site, i18nPrompt.get("crsSummary"), i18nPrompt.get( "crsDescription" ), () -> {
-            return getPredefinedCRS();
-        });
+        crsPrompt = new CrsPrompt( site, predefinedCRS() );
         schemaNamePrompt = new SchemaNamePrompt( site, FilenameUtils.getBaseName( geojsonFile.getName() ) );
     }
 
 
-    protected CoordinateReferenceSystem getPredefinedCRS() {
+    protected CoordinateReferenceSystem predefinedCRS() {
         CoordinateReferenceSystem predefinedCRS = null;
         InputStreamReader isr = null;
         try {

@@ -27,7 +27,6 @@ import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureImpl;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.jts.JTSFactoryFinder;
-import org.geotools.referencing.CRS;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.osgi.framework.ServiceReference;
@@ -62,6 +61,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.polymap.core.data.refine.RefineService;
 import org.polymap.core.data.refine.impl.FormatAndOptions;
 import org.polymap.core.data.refine.impl.ImportResponse;
+import org.polymap.core.data.util.Geometries;
 import org.polymap.core.runtime.i18n.IMessages;
 import org.polymap.core.ui.FormDataFactory;
 
@@ -182,15 +182,7 @@ public abstract class AbstractRefineFileImporter<T extends FormatAndOptions>
               .value.put( coordinatesPromptLabel() )
               .extendedUI.put( coordinatesPromptUiBuilder() );
 
-        crsPrompt = new CrsPrompt( site, i18nPrompt.get("crsSummary"), i18nPrompt.get( "crsDescription" ), () -> {
-            try {
-                return CRS.decode( "EPSG:4326" );
-            }
-            catch (Exception e) {
-                // do nothing
-            }
-            return null;
-        });
+        crsPrompt = new CrsPrompt( site, Geometries.crs( "EPSG:4326" ) );
         
         schemaNamePrompt = new SchemaNamePrompt( site, layerName() );
     }

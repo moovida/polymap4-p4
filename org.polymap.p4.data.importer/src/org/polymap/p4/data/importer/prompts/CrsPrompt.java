@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.function.Supplier;
 
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.ReferencingFactoryFinder;
@@ -45,11 +44,9 @@ import org.polymap.p4.data.importer.Messages;
  */
 public class CrsPrompt {
 
-    private static final IMessages    i18n       = Messages.forPrefix( "CrsPrompt" );
+    private static final Log log = LogFactory.getLog( CrsPrompt.class );
 
-    private static final IMessages    i18nPrompt = Messages.forPrefix( "ImporterPrompt" );
-
-    private static Log                log        = LogFactory.getLog( CrsPrompt.class );
+    private static final IMessages    i18n = Messages.forPrefix( "CrsPrompt" );
 
     private ImporterSite              site;
 
@@ -59,24 +56,49 @@ public class CrsPrompt {
     private Map<String,String>        crsNames;
 
 
-    public CrsPrompt( final ImporterSite site, final String summary, final String description, final Supplier<CoordinateReferenceSystem> crsSupplier ) {
+    public CrsPrompt( ImporterSite site, CoordinateReferenceSystem initialSelection ) {
         this.site = site;
+        this.selection = initialSelection;
         
         initCrsNames();
-        
-        selection = crsSupplier.get();
 
+        Severity severity = Severity.REQUIRED;
+        if (selection != null) {
+            severity = Severity.VERIFY;
+            
+            // check authority
+            String srs = CRS.toSRS( selection );
+            if (srs != null && !srs.startsWith( "EPSG:" )) {
+                severity = Severity.REQUIRED;
+                // XXX CRS.lookupEpsgCode() crashes because of Mercator1SPGoogle bundle classloading issue
+                // would it be better to use lookupEpsgCode() anyway? 
+                for (Map.Entry<String,String> entry : crsNames.entrySet()) {
+                    try {
+                        CoordinateReferenceSystem candidate = Geometries.crs( entry.getValue() );
+                        if (CRS.equalsIgnoreMetadata( candidate, selection )) {
+                            this.selection = candidate;
+                            severity = Severity.VERIFY;
+                            break;
+                        }
+                    }
+                    catch (Exception e) {
+                        log.warn( "", e );
+                    }
+                }
+            }
+        }
+        
         site.newPrompt( "crs" )
-                .summary.put( summary )
-                .description.put( description )
-                .value.put( selection != null ? crsName( selection ) : "???" )
-                .severity.put( selection != null ? Severity.VERIFY : Severity.REQUIRED )
+                .summary.put( i18n.get( "summary" ) )
+                .description.put( i18n.get( "description" ) )
+                .value.put( labelOf( selection ) )
+                .severity.put( severity )
                 .extendedUI.put( new FilteredListPromptUIBuilder() {
                     
                     @Override
                     public void submit( ImporterPrompt prompt ) {
                         prompt.ok.set( true );
-                        prompt.value.put( crsName( selection ) );
+                        prompt.value.put( labelOf( selection ) );
                     }
                     
                     @Override
@@ -92,7 +114,7 @@ public class CrsPrompt {
 
                     @Override
                     protected String initiallySelectedItem() {
-                        return selection != null ? crsName( selection ) : "???";
+                        return labelOf( selection );
                     }
                     
                     @Override
@@ -109,12 +131,12 @@ public class CrsPrompt {
 
                     @Override
                     protected String description() {
-                        return i18nPrompt.get( "filterDescription" );
+                        return i18n.get( "filterDescription" );
                     }
 
                     @Override
                     protected String summary() {
-                        return i18nPrompt.get( "filterSummary" );
+                        return i18n.get( "filterSummary" );
                     }
                 });
     }
@@ -128,17 +150,21 @@ public class CrsPrompt {
     }
 
 
-    protected String crsName( CoordinateReferenceSystem crs ) {
-        String code = CRS.toSRS( crs );
-        String crsName = crsNames.entrySet().stream()
-                .filter( entry -> entry.getValue().equals( code ) )
-                .map( entry -> entry.getKey() )
-                .findAny().orElse( null );
-        if (crsName == null) {
-            crsName = code;
-            crsNames.put( crsName, crsName );
-        }
-        return crsName;
+    protected String labelOf( CoordinateReferenceSystem crs ) {
+        return crs != null
+                ? CRS.toSRS( crs )
+                : "???";
+                
+//        String code = CRS.toSRS( crs );
+//        String crsName = crsNames.entrySet().stream()
+//                .filter( entry -> entry.getValue().equals( code ) )
+//                .map( entry -> entry.getKey() )
+//                .findAny().orElse( null );
+//        if (crsName == null) {
+//            crsName = code;
+//            crsNames.put( crsName, crsName );
+//        }
+//        return crsName;
     }
     
 
