@@ -109,6 +109,7 @@ public class ProjectRepository {
                                 proto.label.set( "World" );
                                 proto.description.set( res.getDescription().orElse( null ) );
                                 proto.resourceIdentifier.set( AllResolver.instance().resourceIdentifier( res ) );
+                                proto.orderKey.set( 1 );
                                 return proto;
                             });
                             layer.parentMap.set( map );
