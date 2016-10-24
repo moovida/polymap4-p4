@@ -23,7 +23,12 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.eclipse.core.runtime.NullProgressMonitor;
+
 import org.polymap.core.CorePlugin;
+import org.polymap.core.catalog.IMetadata;
+import org.polymap.core.catalog.resolve.IResourceInfo;
+import org.polymap.core.catalog.resolve.IServiceInfo;
 import org.polymap.core.data.util.Geometries;
 import org.polymap.core.project.EnvelopeComposite;
 import org.polymap.core.project.ILayer;
@@ -36,6 +41,8 @@ import org.polymap.model2.runtime.UnitOfWork;
 import org.polymap.model2.runtime.locking.OptimisticLocking;
 import org.polymap.model2.store.recordstore.RecordStoreAdapter;
 import org.polymap.p4.P4Plugin;
+import org.polymap.p4.catalog.AllResolver;
+import org.polymap.p4.catalog.LocalCatalog;
 import org.polymap.recordstore.lucene.LuceneRecordStore;
 
 /**
@@ -90,6 +97,28 @@ public class ProjectRepository {
                     proto.maxExtent.createValue( EnvelopeComposite.defaults( maxExtent ) );
                     return proto;
                 });
+                
+                // default background layer from mapzone.io
+                try {
+                    NullProgressMonitor monitor = new NullProgressMonitor();
+                    IMetadata md = P4Plugin.localCatalog().entry( LocalCatalog.WORLD_BACKGROUND_ID, monitor ).get();
+                    IServiceInfo service = (IServiceInfo)AllResolver.instance().resolve( md, monitor );
+                    for (IResourceInfo res : service.getResources( monitor )) {
+                        if ("Simple".equalsIgnoreCase( res.getName() ) ) {
+                            ILayer layer = uow.createEntity( ILayer.class, null, (ILayer proto) -> {
+                                proto.label.set( "World" );
+                                proto.description.set( res.getDescription().orElse( null ) );
+                                proto.resourceIdentifier.set( AllResolver.instance().resourceIdentifier( res ) );
+                                return proto;
+                            });
+                            layer.parentMap.set( map );
+                            map.layers.add( layer );
+                        }
+                    }
+                }
+                catch (Exception e) {
+                    log.warn( "Error while creating default background layer.", e );
+                }
             }
             else {
                 // convert legacy setting
@@ -124,87 +153,5 @@ public class ProjectRepository {
     public static UnitOfWork newUnitOfWork() {
         return repo.newUnitOfWork();
     }
-    
-    
-//    /**
-//     * 
-//     */
-//    static class UnitOfWorkWrapper
-//            extends SessionSingleton
-//            implements UnitOfWork {
-//        
-//        private UnitOfWork          delegate;
-//        
-//        private UnitOfWork          parent;
-//
-//        /** This is the {@link SessionSingleton} ctor. */
-//        public UnitOfWorkWrapper() {
-//            this.delegate = repo.newUnitOfWork();    
-//        }
-//        
-//        /** This is the ctor fpr nested instances. */
-//        public UnitOfWorkWrapper( UnitOfWork parent ) {
-//            this.delegate = parent.newUnitOfWork();
-//            this.parent = parent;
-//        }
-//        
-//        public <T extends Entity> T entityForState( Class<T> entityClass, Object state ) {
-//            return delegate.entityForState( entityClass, state );
-//        }
-//
-//        public <T extends Entity> T entity( Class<T> entityClass, Object id ) {
-//            return delegate.entity( entityClass, id );
-//        }
-//
-//        public <T extends Entity> T entity( T entity ) {
-//            return delegate.entity( entity );
-//        }
-//
-//        public <T extends Entity> T createEntity( Class<T> entityClass, Object id, ValueInitializer<T>... initializers ) {
-//            return delegate.createEntity( entityClass, id, initializers );
-//        }
-//
-//        public void removeEntity( Entity entity ) {
-//            delegate.removeEntity( entity );
-//        }
-//
-//        public void prepare() throws IOException, ConcurrentEntityModificationException {
-//            throw new RuntimeException( "the nested UoW thing does not (yet) support prepare()." );
-//            //delegate.prepare();
-//        }
-//
-//        public void commit() throws ModelRuntimeException {
-//            synchronized( parent) {
-//                try {
-//                    delegate.commit();
-//                    parent.commit();
-//                }
-//                catch (Exception e) {
-//                    log.info( "Commit nested ProjectRepository failed.", e );
-//                    parent.rollback();
-//                }
-//            }
-//        }
-//
-//        public void rollback() throws ModelRuntimeException {
-//            delegate.rollback();
-//        }
-//
-//        public void close() {
-//            delegate.close();
-//        }
-//
-//        public boolean isOpen() {
-//            return delegate.isOpen();
-//        }
-//
-//        public <T extends Entity> Query<T> query( Class<T> entityClass ) {
-//            return delegate.query( entityClass );
-//        }
-//
-//        public UnitOfWork newUnitOfWork() {
-//            return new UnitOfWorkWrapper( delegate );
-//        }
-//    }
     
 }

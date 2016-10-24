@@ -23,6 +23,8 @@ import org.geotools.data.DataAccess;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.google.common.collect.Sets;
+
 import org.eclipse.core.runtime.NullProgressMonitor;
 
 import org.polymap.core.CorePlugin;
@@ -30,6 +32,8 @@ import org.polymap.core.catalog.IMetadata;
 import org.polymap.core.catalog.local.LocalMetadataCatalog;
 import org.polymap.core.catalog.resolve.IResolvableInfo;
 import org.polymap.core.data.rs.catalog.RServiceResolver;
+import org.polymap.core.data.wms.catalog.WmsServiceResolver;
+
 import org.polymap.rhei.fulltext.store.lucene.LuceneFulltextIndex;
 
 import org.polymap.model2.store.recordstore.RecordStoreAdapter;
@@ -49,6 +53,8 @@ public class LocalCatalog
     private static final File       LOCAL_FEATURES_STORE_DIR = new File( CorePlugin.getDataLocation( P4Plugin.instance() ), "features" );
 
     public static final String      LOCAL_FEATURES_STORE_ID = "_local_features_store_";
+
+    public static final String      WORLD_BACKGROUND_ID = "_world_background_";
 
     private LuceneRecordStore       store;
 
@@ -132,11 +138,14 @@ public class LocalCatalog
                     metadata.setType( "Database" );
                     metadata.setConnectionParams( RServiceResolver.createParams( LOCAL_FEATURES_STORE_DIR ) );
                 });
-//                update.newEntry( metadata -> {
-//                    metadata.setTitle( "OSM WMS" );
-//                    metadata.setDescription( "-test entry-" );
-//                    metadata.setConnectionParams( WmsServiceResolver.createParams( "http://ows.terrestris.de/osm/service/" ) );
-//                });
+                update.newEntry( metadata -> {
+                    metadata.setIdentifier( WORLD_BACKGROUND_ID );
+                    metadata.setTitle( "World" );
+                    metadata.setDescription( "Default background and demo layers from mapzone.io." );
+                    metadata.setType( "Service" );
+                    metadata.setFormats( Sets.newHashSet( "WMS", "WFS" ) );
+                    metadata.setConnectionParams( WmsServiceResolver.createParams( "http://mapzone.io/projects/falko/World/ows/n92ln3he1b536m3ir8rds98ohn/ows?SERVICE=WMS" ) );
+                });
 //                update.newEntry( metadata -> {
 //                    metadata.setTitle( "Schutzgebiete Mittelsachsen" );
 //                    metadata.setDescription( "-test entry-" );
