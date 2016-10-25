@@ -17,6 +17,8 @@ package org.polymap.p4.map;
 import static org.polymap.core.runtime.event.TypeEventFilter.ifType;
 
 import java.util.List;
+import java.util.Objects;
+
 import java.beans.PropertyChangeEvent;
 
 import org.apache.commons.logging.Log;
@@ -93,7 +95,7 @@ public class ProjectContentProvider
         EventManager.instance().subscribe( styleListener, ifType( FeatureStyleCommitedEvent.class, ev -> {
             return map.layers.stream()
                     .filter( l -> l.userSettings.get().visible.get() )
-                    .filter( l -> l.styleIdentifier.get().equals( ev.getSource().id() )  )
+                    .filter( l -> Objects.equals( l.styleIdentifier.get(), ev.getSource().id() )  )
                     .findAny().isPresent();
         }));
     }
@@ -137,7 +139,7 @@ public class ProjectContentProvider
             log.info( "..." );
             for (FeatureStyleCommitedEvent ev : evs) {
                 for (ILayer layer : map.layers) {
-                    if (layer.styleIdentifier.get().equals( ev.getSource().id() ) ) {
+                    if (Objects.equals( layer.styleIdentifier.get(), ev.getSource().id() ) ) {
                         log.info( "refresh: " + layer.label.get() );
                         viewer.refresh( layer );
                     }

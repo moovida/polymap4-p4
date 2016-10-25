@@ -60,7 +60,12 @@ public class ProjectRepository {
         try {
             File dir = new File( CorePlugin.getDataLocation( P4Plugin.instance() ), "project" );
             dir.mkdirs();
-            LuceneRecordStore store = new LuceneRecordStore( dir, false );
+            LuceneRecordStore store = LuceneRecordStore.newConfiguration()
+                    .indexDir.put( dir )
+                    .clean.put( false )
+                    .executor.put( null )
+                    .create();
+            
             repo = EntityRepository.newConfiguration()
                     .entities.set( new Class[] {
                             IMap.class, 
@@ -113,7 +118,6 @@ public class ProjectRepository {
                                 return proto;
                             });
                             layer.parentMap.set( map );
-                            map.layers.add( layer );
                         }
                     }
                 }

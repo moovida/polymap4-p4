@@ -103,7 +103,7 @@ public class FeatureSelectionTableContrib
                     }
                     // created
                     ILayer layer = ev.getEntity( uow );
-                    if (map.get().containsLayer( layer )) {
+                    if (layer != null && map.get().containsLayer( layer )) {
                         return true;
                     }
                 }
