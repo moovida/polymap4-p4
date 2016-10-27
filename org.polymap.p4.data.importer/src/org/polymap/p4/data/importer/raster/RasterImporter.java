@@ -187,10 +187,6 @@ public class RasterImporter
                         })
                         .paragraph( "*Grid support is in **BETA** stage. The data is imported and accessed as is. No error checking, validation or optimization is done.*" );
                 tk.createFlowText( parent, out.toString() );
-                
-                log.info( "Source: " + grid.getSource() );
-                log.info( "Format: " + grid.getFormat().getName() );
-                log.info( "CRS: " + grid.getCoordinateReferenceSystem() );
             }
             catch (Exception e) {
                 log.warn( "", e );
@@ -205,6 +201,7 @@ public class RasterImporter
     @Override
     public void execute( IProgressMonitor monitor ) throws Exception {
         // copy data files
+        monitor.beginTask( "Copying files", IProgressMonitor.UNKNOWN );
         File targetDir = new File( P4Plugin.gridStoreDir(), getBaseName( main.getName() ) );
         FileUtils.copyDirectory( main.getParentFile(), targetDir );
         File targetMain = new File( targetDir, main.getName() );

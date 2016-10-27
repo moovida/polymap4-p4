@@ -16,8 +16,6 @@ package org.polymap.p4.data.importer;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toMap;
 import static org.polymap.core.runtime.UIThreadExecutor.asyncFast;
-import static org.polymap.rhei.batik.toolkit.md.dp.dp;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EventObject;
@@ -38,8 +36,6 @@ import com.google.common.collect.ImmutableList;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Label;
-
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
@@ -50,16 +46,14 @@ import org.polymap.core.runtime.UIJob;
 import org.polymap.core.runtime.config.Configurable;
 import org.polymap.core.runtime.event.EventHandler;
 import org.polymap.core.runtime.event.EventManager;
-import org.polymap.core.ui.FormDataFactory;
-import org.polymap.core.ui.FormLayoutFactory;
 import org.polymap.core.ui.UIUtils;
 
-import org.polymap.rhei.batik.BatikPlugin;
 import org.polymap.rhei.batik.toolkit.IPanelToolkit;
 
 import org.polymap.p4.data.importer.ImporterFactory.ImporterBuilder;
 import org.polymap.p4.data.importer.ImporterPrompt.Severity;
 import org.polymap.p4.data.importer.archive.ArchiveFileImporterFactory;
+import org.polymap.p4.data.importer.download.DownloadImporterFactory;
 import org.polymap.p4.data.importer.geojson.GeoJSONImporterFactory;
 import org.polymap.p4.data.importer.kml.KMLImporterFactory;
 import org.polymap.p4.data.importer.raster.RasterImporterFactory;
@@ -89,6 +83,7 @@ public class ImporterContext
             KMLImporterFactory.class,
             GeoJSONImporterFactory.class,
             ShpImporterFactory.class,
+            DownloadImporterFactory.class,
             WmsImporterFactory.class, 
             WfsImporterFactory.class,
             RasterImporterFactory.class };
@@ -105,6 +100,8 @@ public class ImporterContext
     private Map<String,ImporterPrompt>      prompts = new LinkedHashMap();
     
     private UIJob                           verifier;
+
+    private ImporterMonitor                 verifierMonitor;
 
     private Composite                       resultViewerParent;
 
@@ -186,15 +183,17 @@ public class ImporterContext
             verifier = null;
         }
         // new Job
+        verifierMonitor = new ImporterMonitor();
         verifier = new UIJob( "Progress import" ) {
             @Override
             protected void runWithException( IProgressMonitor monitor ) throws Exception {
-                importer.verify( monitor );
+                importer.verify( verifierMonitor );
+                
                 if (site().ok.get()) {
                     // check if all prompts also ok
                     for (ImporterPrompt prompt : prompts.values()) {
                         if (prompt.severity.isPresent() && prompt.severity.get().equals( Severity.REQUIRED ) && !prompt.ok.get()) {
-                            // on first false, all is false
+                            // on first false, all are false
                             site().ok.set( false );
                             break;
                         }
@@ -292,7 +291,10 @@ public class ImporterContext
                         .max( Comparator.comparing( s -> s.ordinal() ) );
     }
     
-    
+
+    /**
+     * User has clicked this context in the list and wants to see the contents.
+     */
     public void updateResultViewer( Composite parent, IPanelToolkit tk ) {
         resultViewerParent = parent;
         resultViewerTk = tk;
@@ -311,11 +313,7 @@ public class ImporterContext
         };
         if (verifier != null) {
             UIUtils.disposeChildren( parent );
-            parent.setLayout( FormLayoutFactory.defaults().margins( dp( 80 ).pix() ).create() );
-            Label msg = new Label( parent, SWT.CENTER );
-            msg.setLayoutData( FormDataFactory.filled().create() );
-            msg.setText( "Crunching data..." );
-            msg.setImage( BatikPlugin.images().image( "resources/icons/loading24.gif" ) );
+            verifierMonitor.createContents( parent, tk );
             parent.layout( true );
             
             verifier.addJobChangeListenerWithContext( updateUI );

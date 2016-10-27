@@ -367,7 +367,7 @@ public class ImportPanel
                         UIThreadExecutor.async( () -> {
                             parent.setLayout( new FillLayout( SWT.VERTICAL ) );
                             UIUtils.disposeChildren( parent );
-                            tk().createFlowText( parent, "Uploaded in progress... " + byteCountToDisplaySize( count.get() ) );
+                            tk().createFlowText( parent, "Uploading... " + byteCountToDisplaySize( count.get() ) );
                             parent.layout();
                         });
                         timer.start();

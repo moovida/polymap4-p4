@@ -179,8 +179,10 @@ public class ShpImporter
             fs = ds.getFeatureSource();
             
             // check all features
+            ContentFeatureCollection results = fs.getFeatures();
+            monitor.beginTask( "Checking all features", results.size() );
             try (
-                SimpleFeatureIterator it = fs.getFeatures().features();
+                SimpleFeatureIterator it = results.features();
             ){
                 SimpleFeatureType schema = fs.getSchema();
                 while (it.hasNext()) {
@@ -191,6 +193,7 @@ public class ShpImporter
                         throw new RuntimeException( "Feature has no geometry: " + feature.getIdentifier().getID() );
                     }
                     // other checks...?
+                    monitor.worked( 1 );
                 }
             }
 
