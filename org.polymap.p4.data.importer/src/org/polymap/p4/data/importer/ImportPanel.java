@@ -13,6 +13,7 @@
  */
 package org.polymap.p4.data.importer;
 
+import static org.apache.commons.io.FileUtils.byteCountToDisplaySize;
 import static org.polymap.core.runtime.UIThreadExecutor.async;
 import static org.polymap.core.runtime.event.TypeEventFilter.ifType;
 import static org.polymap.core.ui.FormDataFactory.on;
@@ -21,6 +22,7 @@ import static org.polymap.rhei.batik.app.SvgImageRegistryHelper.WHITE24;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -29,7 +31,6 @@ import java.io.OutputStream;
 
 import org.geotools.feature.FeatureCollection;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -40,6 +41,7 @@ import org.eclipse.swt.dnd.DropTargetAdapter;
 import org.eclipse.swt.dnd.DropTargetEvent;
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 
@@ -58,12 +60,15 @@ import org.eclipse.rap.rwt.dnd.ClientFileTransfer;
 
 import org.polymap.core.operation.DefaultOperation;
 import org.polymap.core.operation.OperationSupport;
+import org.polymap.core.runtime.Timer;
+import org.polymap.core.runtime.UIThreadExecutor;
 import org.polymap.core.runtime.event.EventHandler;
 import org.polymap.core.runtime.event.EventManager;
 import org.polymap.core.runtime.i18n.IMessages;
 import org.polymap.core.ui.FormLayoutFactory;
 import org.polymap.core.ui.SelectionAdapter;
 import org.polymap.core.ui.StatusDispatcher;
+import org.polymap.core.ui.UIUtils;
 
 import org.polymap.rhei.batik.Context;
 import org.polymap.rhei.batik.PanelIdentifier;
@@ -345,8 +350,30 @@ public class ImportPanel
         File f = new File( tempDir, clientFile.getName() );
         try (
             OutputStream out = new FileOutputStream( f )
-        ) {
-            IOUtils.copy( in, out );
+        ){
+            Timer timer = new Timer();
+            byte[] buf = new byte[4096];
+            AtomicLong count = new AtomicLong();
+            for (int c=in.read( buf ); c>-1; c=in.read( buf )) {
+                out.write( buf, 0, c );
+                count.addAndGet( c );
+                
+                if (timer.elapsedTime() > 2000) {
+                    Composite parent = resultSection.getBody();
+                    if (parent.isDisposed()) {
+                        break;
+                    }
+                    else {
+                        UIThreadExecutor.async( () -> {
+                            parent.setLayout( new FillLayout( SWT.VERTICAL ) );
+                            UIUtils.disposeChildren( parent );
+                            tk().createFlowText( parent, "Uploaded in progress... " + byteCountToDisplaySize( count.get() ) );
+                            parent.layout();
+                        });
+                        timer.start();
+                    }
+                }
+            }
         }
         catch (Exception e) {
             async( () -> site().toolkit().createSnackbar( Appearance.FadeIn, "Unable to upload file." ) );
