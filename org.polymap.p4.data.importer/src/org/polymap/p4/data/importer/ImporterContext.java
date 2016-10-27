@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2015, the @autors. All rights reserved.
+ * Copyright (C) 2015-2016, the @autors. All rights reserved.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -62,6 +62,7 @@ import org.polymap.p4.data.importer.ImporterPrompt.Severity;
 import org.polymap.p4.data.importer.archive.ArchiveFileImporterFactory;
 import org.polymap.p4.data.importer.geojson.GeoJSONImporterFactory;
 import org.polymap.p4.data.importer.kml.KMLImporterFactory;
+import org.polymap.p4.data.importer.raster.RasterImporterFactory;
 import org.polymap.p4.data.importer.refine.csv.CSVFileImporterFactory;
 import org.polymap.p4.data.importer.refine.excel.ExcelFileImporterFactory;
 import org.polymap.p4.data.importer.shapefile.ShpImporterFactory;
@@ -81,7 +82,7 @@ public class ImporterContext
     private static Log log = LogFactory.getLog( ImporterContext.class );
     
     // XXX make this an extension point
-    private static final Class[]            factories = { 
+    private static final Class[]            FACTORIES = { 
             ArchiveFileImporterFactory.class, 
             CSVFileImporterFactory.class, 
             ExcelFileImporterFactory.class, 
@@ -89,7 +90,8 @@ public class ImporterContext
             GeoJSONImporterFactory.class,
             ShpImporterFactory.class,
             WmsImporterFactory.class, 
-            WfsImporterFactory.class };
+            WfsImporterFactory.class,
+            RasterImporterFactory.class };
     
     private Importer                        importer;
     
@@ -245,11 +247,11 @@ public class ImporterContext
      * @throws InstantiationException 
      */
     public List<ImporterContext> findNext( IProgressMonitor monitor ) throws Exception {
-        monitor.beginTask( "Check importers", factories.length*10 );
+        monitor.beginTask( "Check importers", FACTORIES.length*10 );
         
         List<ImporterContext> result = new ArrayList();
         
-        for (Class<ImporterFactory> cl : factories) {
+        for (Class<ImporterFactory> cl : FACTORIES) {
             ImporterFactory factory = cl.newInstance();
             injectContextIn( factory, contextOut );
             SubProgressMonitor submon = new SubProgressMonitor( monitor, 10 );

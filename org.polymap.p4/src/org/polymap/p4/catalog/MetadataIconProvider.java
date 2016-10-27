@@ -39,23 +39,29 @@ class MetadataIconProvider
 
     @Override
     public void update( ViewerCell cell ) {
+        String config12 = SvgImageRegistryHelper.NORMAL12;
         Object elm = cell.getElement();
+        
         if (elm instanceof IMetadataCatalog) {
             cell.setImage( P4Plugin.images().svgImage( "book-open-page-variant.svg", NORMAL24 ) );
         }
         else if (elm instanceof LocalMetadata) {
-            if (((LocalMetadata)elm).getIdentifier().equals( LocalCatalog.LOCAL_FEATURES_STORE_ID )) {
-                cell.setImage( P4Plugin.images().svgImage( "database.svg", SvgImageRegistryHelper.NORMAL12 ) );
+            LocalMetadata md = (LocalMetadata)elm;
+            if (md.getIdentifier().equals( LocalCatalog.LOCAL_FEATURES_STORE_ID )) {
+                cell.setImage( P4Plugin.images().svgImage( "database.svg", config12 ) );
+            }
+            else if ("Grid".equals( md.getType().orElse( null ) )) {
+                cell.setImage( P4Plugin.images().svgImage( "grid.svg", config12 ) );                
             }
             else {
-                cell.setImage( P4Plugin.images().svgImage( "earth.svg", SvgImageRegistryHelper.NORMAL12 ) );
+                cell.setImage( P4Plugin.images().svgImage( "earth.svg", config12 ) );
             }
         }
         else if (elm instanceof IMetadata) {
-            cell.setImage( P4Plugin.images().svgImage( "human-greeting.svg", SvgImageRegistryHelper.NORMAL12 ) );
+            cell.setImage( P4Plugin.images().svgImage( "human-greeting.svg", config12 ) );
         }
         else if (elm instanceof IResourceInfo) {
-            cell.setImage( P4Plugin.images().svgImage( "chevron-right.svg", SvgImageRegistryHelper.NORMAL12 ) );
+            cell.setImage( P4Plugin.images().svgImage( "chevron-right.svg", config12 ) );
 //            if (elm instanceof RServiceInfo.RResourceInfo) {
 //                cell.setImage( P4Plugin.images().svgImage( "human-greeting.svg", SvgImageRegistryHelper.NORMAL12 ) );
 //            }

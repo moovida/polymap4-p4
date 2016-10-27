@@ -27,7 +27,6 @@ import com.google.common.collect.Sets;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 
-import org.polymap.core.CorePlugin;
 import org.polymap.core.catalog.IMetadata;
 import org.polymap.core.catalog.local.LocalMetadataCatalog;
 import org.polymap.core.catalog.resolve.IResolvableInfo;
@@ -49,8 +48,6 @@ public class LocalCatalog
         extends LocalMetadataCatalog {
 
     private static Log log = LogFactory.getLog( LocalCatalog.class );
-
-    private static final File       LOCAL_FEATURES_STORE_DIR = new File( CorePlugin.getDataLocation( P4Plugin.instance() ), "features" );
 
     public static final String      LOCAL_FEATURES_STORE_ID = "_local_features_store_";
 
@@ -130,13 +127,13 @@ public class LocalCatalog
         if (query( ALL_QUERY, new NullProgressMonitor() ).execute().size() == 0) {
             // create standard entries
             try (Updater update = prepareUpdate()) {
-                LOCAL_FEATURES_STORE_DIR.mkdirs();
+                P4Plugin.featureStoreDir().mkdirs();
                 update.newEntry( metadata -> {
                     metadata.setIdentifier( LOCAL_FEATURES_STORE_ID );
                     metadata.setTitle( "Datastore" );
                     metadata.setDescription( "The data store of this project" );
                     metadata.setType( "Database" );
-                    metadata.setConnectionParams( RServiceResolver.createParams( LOCAL_FEATURES_STORE_DIR ) );
+                    metadata.setConnectionParams( RServiceResolver.createParams( P4Plugin.featureStoreDir() ) );
                 });
                 update.newEntry( metadata -> {
                     metadata.setIdentifier( WORLD_BACKGROUND_ID );

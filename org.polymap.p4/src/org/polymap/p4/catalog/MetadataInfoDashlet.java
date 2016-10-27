@@ -72,17 +72,17 @@ public class MetadataInfoDashlet
         CharArrayWriter out = new CharArrayWriter( 1024 );
         MarkdownBuilder markdown = new MarkdownBuilder( out );
         
-        markdown.paragraph( () -> {
-            markdown.em( () -> {
-               markdown.join( " ", md.getType().orElse( null ), md.getFormats() );
+        markdown.paragraph( p -> {
+            p.em( em -> {
+               em.join( " ", md.getType().orElse( null ), md.getFormats() );
             });
         });
-        markdown.paragraph( () -> {
+        markdown.paragraph( p -> {
             String description = md.getDescription().orElse( null );
             if (description != null) {
                 description = StringUtils.abbreviate( description, 500 );
             }
-            markdown.add( description );
+            p.add( description );
         });
 //        markdown.paragraph( () -> {
 //            DateFormat df = SimpleDateFormat.getDateInstance( SimpleDateFormat.MEDIUM, RWT.getLocale() );

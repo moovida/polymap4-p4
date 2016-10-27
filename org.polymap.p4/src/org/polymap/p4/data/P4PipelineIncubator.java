@@ -29,6 +29,7 @@ import org.polymap.core.data.pipeline.PipelineIncubator;
 import org.polymap.core.data.pipeline.PipelineProcessor;
 import org.polymap.core.data.pipeline.PipelineProcessorSite;
 import org.polymap.core.data.pipeline.ProcessorDescription;
+import org.polymap.core.data.raster.RasterRenderProcessor;
 import org.polymap.core.data.wms.WmsRenderProcessor;
 import org.polymap.core.project.ILayer;
 
@@ -49,7 +50,8 @@ public class P4PipelineIncubator
         ImageDecodeProcessor.class,
         FeatureRenderProcessor2.class,
         DataSourceProcessor.class,
-        WmsRenderProcessor.class
+        WmsRenderProcessor.class,
+        RasterRenderProcessor.class,
     };
 
     

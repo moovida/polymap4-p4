@@ -80,6 +80,14 @@ public class P4Plugin
         return instance;
     }
 
+    public static File featureStoreDir() {
+        return new File( CorePlugin.getDataLocation( P4Plugin.instance ), "features" );    
+    }
+    
+    public static File gridStoreDir() {
+        return new File( CorePlugin.getDataLocation( P4Plugin.instance ), "grids" );    
+    }
+
     /**
      * Shortcut for <code>instance().images</code>.
      */
@@ -198,5 +206,5 @@ public class P4Plugin
     public HttpService httpService() {
         return httpService.orElseThrow( () -> new IllegalStateException( "No HTTP service!" ) );
     }
-
+    
 }
