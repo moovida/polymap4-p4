@@ -61,7 +61,13 @@
 			<remoteRepository refid="central.repository" />
 
 		    <dependency groupId="org.apache.commons" artifactId="commons-compress" version="1.9" />
-		    <dependency groupId="org.geotools.xsd" artifactId="gt-xsd-kml" version="${geotools.version}" />
+		    
+            <!-- 
+              All GeoTools jars are loaded by org.polymap.core.data. This is easier to maintain
+              until we have a way to load *just* the needed jars in dependent plugins. 
+            -->
+		    <!--dependency groupId="org.geotools.xsd" artifactId="gt-xsd-kml" version="${geotools.version}" /-->
+		    
 			<!-- testing -->
 		    <!--dependency groupId="org.mockito" artifactId="mockito-all" version="1.10.19" />
 		    <dependency groupId="org.powermock" artifactId="powermock-module-junit4" version="1.6.2" />
