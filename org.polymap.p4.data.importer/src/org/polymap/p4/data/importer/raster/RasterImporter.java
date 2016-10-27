@@ -123,6 +123,9 @@ public class RasterImporter
             log.info( "File size: " + FileUtils.sizeOf( main ) );
 
             grid = GridServiceInfo.open( main );
+            if (grid == null) {
+                throw new Exception( "No valid reader found." );
+            }
             log.info( "reader: " + grid );
             log.info( "reader: " + Arrays.asList( grid.getGridCoverageNames() ) );
             log.info( "reader: " + grid.getFormat().getName() );
@@ -168,6 +171,7 @@ public class RasterImporter
                             }
                             catch (Exception e) {
                                 log.warn( "", e );
+                                p.add( "Error: " + e.getLocalizedMessage() ).newline( 1 );
                             }
                         })
                         .paragraph( p -> {

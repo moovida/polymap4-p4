@@ -34,7 +34,7 @@ import org.polymap.p4.data.importer.ImporterFactory;
 public class RasterImporterFactory
         implements ImporterFactory {
 
-    public static final List<String> SUPPORTED_EXTS = Lists.newArrayList( "tiff", "tif" );
+    public static final List<String> SUPPORTED_EXTS = Lists.newArrayList( "geotiff", "tiff", "tif", /*"tfw", "wld",*/ "asc", "adf" );
     
     @ContextIn
     protected File                  file;

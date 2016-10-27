@@ -34,6 +34,7 @@ import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -43,6 +44,8 @@ import org.polymap.core.runtime.config.Config2;
 import org.polymap.core.runtime.config.Configurable;
 import org.polymap.core.runtime.config.DefaultBoolean;
 import org.polymap.core.runtime.config.Mandatory;
+
+import org.polymap.p4.P4Plugin;
 
 /**
  * Copy files into a (temporarey) directory. Handles *.zip, *.tar, *.gz. Flattens the
@@ -60,7 +63,7 @@ public class ArchiveReader
     public Config2<ArchiveReader,File>      targetDir;
     
     @Mandatory
-    @DefaultBoolean(false)
+    @DefaultBoolean( false )
     public Config2<ArchiveReader,Boolean>   overwrite;
     
     /** Charset for ZIP. Defaults to UTF8. */
@@ -75,7 +78,7 @@ public class ArchiveReader
     public ArchiveReader() {
         charset.set( Charset.forName( "UTF8" ) );
         try {
-            targetDir.set( Files.createTempDirectory( "P4-" ).toFile() );
+            targetDir.set( Files.createTempDirectory( P4Plugin.ID + "-" ).toFile() );
         }
         catch (IOException e) {
             throw new RuntimeException( e );
@@ -101,39 +104,34 @@ public class ArchiveReader
         try (
             InputStream in = new BufferedInputStream(  new FileInputStream( f ) ); 
         ){
-            handle( f.getName(), null, in );
+            handle( targetDir.get(), f.getName(), null, in );
             return results;
         }
     }
 
 
-    protected File targetDir() {
-        return targetDir.get();
-    }
-
-
-    protected void handle( String name, String contentType, InputStream in ) throws Exception {
+    protected void handle( File dir, String name, String contentType, InputStream in ) throws Exception {
         if (monitor.isCanceled()) {
             return;
         }
         contentType = contentType == null ? "" : contentType;
         if (name.toLowerCase().endsWith( ".zip" ) || name.toLowerCase().endsWith( ".kmz" ) || contentType.equalsIgnoreCase( "application/zip" )) {
-            handleZip( name, in );
+            handleZip( dir, name, in );
         }
         else if (name.toLowerCase().endsWith( ".tar" ) || contentType.equalsIgnoreCase( "application/tar" )) {
-            handleTar( name, in );
+            handleTar( dir, name, in );
         }
         else if (name.toLowerCase().endsWith( "gz" ) || name.toLowerCase().endsWith( "gzip" ) 
                 || contentType.equalsIgnoreCase( "application/gzip" )) {
-            handleGzip( name, in );
+            handleGzip( dir, name, in );
         }
         else {
-            handleFile( name, in );
+            handleFile( dir, name, in );
         }
     }
     
     
-    protected void handleGzip( String name, InputStream in ) throws Exception {
+    protected void handleGzip( File dir, String name, InputStream in ) throws Exception {
         log.info( "    GZIP: " + name );
         try (GZIPInputStream gzip = new GZIPInputStream( in )) {
             String nextName = null;
@@ -146,14 +144,14 @@ public class ArchiveReader
             else {
                 nextName = name.substring( 0, name.length() - 2 );            
             }
-            handle( nextName, null, gzip );
+            handle( dir, nextName, null, gzip );
         }
     }
 
 
-    protected void handleFile( String name, InputStream in ) throws Exception {
-        log.info( "    FILE: " + name );
-        File target = new File( targetDir(), FilenameUtils.getName( name ) );
+    protected void handleFile( File dir, String name, InputStream in ) throws Exception {
+        log.info( "    FILE: " + dir.getName() + " / "+ name );
+        File target = new File( dir, FilenameUtils.getName( name ) );
         
         if (!overwrite.get() && target.exists()) {
             throw new RuntimeException( "File already exists: " + target );
@@ -167,14 +165,25 @@ public class ArchiveReader
     }
     
     
-    protected void handleZip( String name, InputStream in ) throws Exception {
+    protected void handleZip( File dir, String name, InputStream in ) throws Exception {
         log.info( "    ZIP: " + name );
         try {
             ZipInputStream zip = new ZipInputStream( in, charset.get() );
             ZipEntry entry = null;
+            File subdir = dir;
             while ((entry = zip.getNextEntry()) != null) {
-                if (!entry.isDirectory()) {
-                    handle( entry.getName(), null, zip );
+                if (entry.isDirectory()) {
+                    subdir = new File( subdir, entry.getName() );
+                    subdir.mkdirs();
+                }
+                else {
+                    String path = FilenameUtils.getPath( entry.getName() );
+                    File filedir = subdir;
+                    if (!StringUtils.isBlank( path )) {
+                        filedir = new File( subdir, path );
+                        filedir.mkdirs();                        
+                    }
+                    handle( filedir, FilenameUtils.getName( entry.getName() ), null, zip );
                 }
             }
         }
@@ -189,17 +198,21 @@ public class ArchiveReader
     }
 
 
-    protected void handleTar( String name, InputStream in ) throws Exception {
+    protected void handleTar( File dir, String name, InputStream in ) throws Exception {
         log.info( "    TAR: " + name );
         try (
             TarArchiveInputStream tar = new TarArchiveInputStream( in, charset.get().name() )
         ){
             ArchiveEntry entry = null;
+            File subdir = dir;
             while ((entry = tar.getNextEntry()) != null) {
+                String entryName = FilenameUtils.getName( entry.getName() );
                 if (entry.isDirectory()) {
+                    subdir = new File( subdir, entryName );
+                    subdir.mkdir();                    
                 }
                 else {
-                    handle( entry.getName(), null, tar );
+                    handle( subdir, entryName, null, tar );
                 }
             }
         }

@@ -1,6 +1,6 @@
 /* 
  * polymap.org
- * Copyright (C) 2015, the @autors. All rights reserved.
+ * Copyright (C) 2015-2016, the @autors. All rights reserved.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -72,6 +72,8 @@ public class ArchiveFileImporter
     protected Charset               filenameCharset = CHARSETS[2];
     
     protected Exception             exception;
+
+    private File                    tempDir;
     
 
     @Override
@@ -130,8 +132,9 @@ public class ArchiveFileImporter
     @Override
     public void verify( IProgressMonitor monitor ) {
         try {
+            tempDir = ImportTempDir.create();
             allFiles = new ArchiveReader()
-                    .targetDir.put( ImportTempDir.create() )
+                    .targetDir.put( tempDir )
                     .charset.put( filenameCharset )
                     .run( file, monitor );
             
@@ -154,12 +157,15 @@ public class ArchiveFileImporter
         }
         else {
             org.eclipse.swt.widgets.List list = tk.createList( parent, SWT.V_SCROLL, SWT.H_SCROLL, SWT.MULTI );
-            allFiles.stream().sorted().forEach( f -> list.add( f.getName() ) );
+            
+            int tempDirLength = tempDir.getAbsolutePath().length() + 1;
+            allFiles.stream().sorted().forEach( f -> list.add( f.getAbsolutePath().substring( tempDirLength ) ) );
+            
             selectedFiles = new ArrayList<File>( allFiles );
+            
             list.addSelectionListener( new SelectionAdapter() {
-
                 @Override
-                public void widgetSelected( SelectionEvent e ) {
+                public void widgetSelected( SelectionEvent ev ) {
                     int[] selections = list.getSelectionIndices();
                     if (selections.length == 0) {
                         selectedFiles.clear();
