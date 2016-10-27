@@ -132,6 +132,7 @@ public class ArchiveFileImporter
     @Override
     public void verify( IProgressMonitor monitor ) {
         try {
+            monitor.beginTask( "Unpacking archive", IProgressMonitor.UNKNOWN );
             tempDir = ImportTempDir.create();
             allFiles = new ArchiveReader()
                     .targetDir.put( tempDir )

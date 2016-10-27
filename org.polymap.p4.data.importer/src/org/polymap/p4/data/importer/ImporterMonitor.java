@@ -73,16 +73,20 @@ public class ImporterMonitor
     }
 
     protected void update() {
-        if (msg != null && !msg.isDisposed()) {
-            UIThreadExecutor.async( () -> {
+        if (updated.elapsedTime() < 2000) {
+            return;
+        }
+        updated.start();
+        UIThreadExecutor.async( () -> {
+            if (msg != null && !msg.isDisposed()) {
                 String s = Joiner.on( " " ).skipNulls().join( taskName, " ...", subTaskName );
                 if (total != UNKNOWN) {
                     double percent = 100d / total * worked;
                     s += " (" + (int)percent + "%)";
                 }
                 msg.setText( s );
-            });
-        }
+            }
+        });
     }
     
     @Override
@@ -112,10 +116,7 @@ public class ImporterMonitor
     @Override
     public void worked( int work ) {
         worked += work;
-        if (updated.elapsedTime() > 2000) {
-            update();
-            updated.start();
-        }
+        update();
     }
     
 }
