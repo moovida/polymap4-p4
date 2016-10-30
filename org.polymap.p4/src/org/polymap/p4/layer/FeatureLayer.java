@@ -14,7 +14,6 @@
  */
 package org.polymap.p4.layer;
 
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -40,6 +39,7 @@ import org.polymap.core.project.ILayer;
 import org.polymap.core.runtime.JobExecutor;
 import org.polymap.core.runtime.UIJob;
 import org.polymap.core.runtime.UIThreadExecutor;
+import org.polymap.core.runtime.cache.Cache;
 import org.polymap.core.runtime.event.EventManager;
 import org.polymap.core.runtime.session.SessionSingleton;
 
@@ -63,8 +63,6 @@ public class FeatureLayer {
 
     public static final FilterFactory2  ff = DataPlugin.ff;
 
-    public static final JobExecutor     jobExecutor = new JobExecutor();
-    
     /**
      * The selection modes.
      */
@@ -103,24 +101,30 @@ public class FeatureLayer {
      */
     public static CompletableFuture<Optional<FeatureLayer>> of( ILayer layer ) {
         return CompletableFuture.supplyAsync( () -> {
-            Map<String,FeatureLayer> sessionInstances = SessionHolder.instance( SessionHolder.class ).instances;
-            FeatureLayer result = sessionInstances.computeIfAbsent( (String)layer.id(), key -> { 
+            SessionHolder session = SessionHolder.instance( SessionHolder.class );
+            FeatureLayer result = session.instances.computeIfAbsent( (String)layer.id(), key -> { 
                 try {
-                    return new FeatureLayer( layer ).doConnectLayer( UIJob.monitorOfThread() );
+                    IProgressMonitor monitor = UIJob.monitorOfThread();
+                    return new FeatureLayer( layer ).doConnectLayer( monitor );
                 }
                 catch (Exception e) {
                     throw new CompletionException( e );
                 }
             });
             return result.isValid() ? Optional.of( result ) : Optional.empty();
-        }, jobExecutor );
+        }, JobExecutor.instance() );
     }
     
 
     private static class SessionHolder
             extends SessionSingleton {
     
-        ConcurrentMap<String,FeatureLayer>    instances = new ConcurrentHashMap();
+        /**
+         * Using {@link ConcurrentHashMap} instead of {@link Cache} ensures that
+         * mapping function is executed at most once per key and just one
+         * {@link FeatureLayer} instance is constructed per {@link ILayer}.
+         */
+        ConcurrentMap<String,FeatureLayer>    instances = new ConcurrentHashMap( 32 );
     }
     
     

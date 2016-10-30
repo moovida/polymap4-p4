@@ -14,6 +14,7 @@
  */
 package org.polymap.p4.layer;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.polymap.core.project.ui.ProjectNodeLabelProvider.PropType.Description;
 import static org.polymap.core.project.ui.ProjectNodeLabelProvider.PropType.Label;
 import static org.polymap.core.runtime.event.TypeEventFilter.ifType;
@@ -23,7 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
 import java.beans.PropertyChangeEvent;
 
 import org.opengis.feature.simple.SimpleFeatureType;
@@ -229,7 +229,7 @@ public class LayersPanel
         protected boolean initSelection( MdListViewer _viewer, Object elm ) {
             try {
                 // check: feature layer without geom
-                Optional<FeatureLayer> fl = FeatureLayer.of( (ILayer)elm ).get();
+                Optional<FeatureLayer> fl = FeatureLayer.of( (ILayer)elm ).get( 3, SECONDS );
                 if (fl.isPresent()) {
                     SimpleFeatureType schema = fl.get().featureSource().getSchema();
                     if (schema.getGeometryDescriptor() == null) {

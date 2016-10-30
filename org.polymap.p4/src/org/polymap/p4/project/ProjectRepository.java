@@ -107,7 +107,7 @@ public class ProjectRepository {
                 try {
                     NullProgressMonitor monitor = new NullProgressMonitor();
                     IMetadata md = P4Plugin.localCatalog().entry( LocalCatalog.WORLD_BACKGROUND_ID, monitor ).get();
-                    IServiceInfo service = (IServiceInfo)AllResolver.instance().resolve( md, monitor );
+                    IServiceInfo service = (IServiceInfo)AllResolver.instance().resolve( md ).get();
                     for (IResourceInfo res : service.getResources( monitor )) {
                         if ("Simple".equalsIgnoreCase( res.getName() ) ) {
                             ILayer layer = uow.createEntity( ILayer.class, null, (ILayer proto) -> {

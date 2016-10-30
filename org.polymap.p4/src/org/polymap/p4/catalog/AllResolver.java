@@ -18,7 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.StringTokenizer;
-
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import org.geotools.data.FeatureSource;
 
 import org.apache.commons.logging.Log;
@@ -45,11 +46,13 @@ import org.polymap.p4.layer.FeatureLayer;
  * Provides the connection between an {@link ILayer} -> {@link IMetadata} ->
  * {@link IServiceInfo} and back.
  * <p/>
- * Holds a list of delegate {@link #resolvers} which are responsible of actually
- * creating a service/resource out of a metadata entry. A {@link ILayer} is connected
- * to a metadata entry via the {@link #resourceIdentifier(IResourceInfo)} which
- * consists of the metadata identifier and the resource name.
+ * Holds a list of delegate {@link IMetadataResourceResolver}s which are responsible
+ * of actually creating a service/resource out of a metadata entry. A {@link ILayer}
+ * is connected to a metadata entry via the
+ * {@link #resourceIdentifier(IResourceInfo)} which consists of the metadata
+ * identifier and the resource name.
  *
+ * @see IMetadataResourceResolver
  * @author <a href="http://www.polymap.de">Falko Bräutigam</a>
  */
 public class AllResolver
@@ -77,11 +80,15 @@ public class AllResolver
     /**
      * Caches {@link IResolvableInfo} instances in order to have just one underlying
      * service instances (WMS, Shape, RDataStore, etc.) per JVM.
+     * <p/>
+     * Using {@link ConcurrentHashMap} instead of {@link Cache} ensures that mapping
+     * function is executed at most once per key and there is actually just one
+     * resolvable constructed per metadata.
      */
-    private Cache<IMetadata,IResolvableInfo> resolved = CacheConfig.defaults().initSize( 128 ).createCache();
+    private Map<IMetadata,CompletableFuture<IResolvableInfo>> resolved = new ConcurrentHashMap();
     
     /**
-     * Caches {@link IMetadata} 
+     * Caches {@link IMetadata}.
      */
     private Cache<String,IMetadata>         metadataCache = CacheConfig.defaults().initSize( 128 ).createCache();
     
@@ -179,7 +186,6 @@ public class AllResolver
     }
     
     
-    
     public Optional<IServiceInfo> serviceInfo( ILayer layer, IProgressMonitor monitor ) throws Exception {
         IMetadata metadata = metadata( layer, monitor ).orElse( null );
 
@@ -205,10 +211,43 @@ public class AllResolver
         }
         return Optional.empty();        
     }
-    
-    
+
+  
     // IMetadataResourceResolver **************************
+
+    /**
+     * {@inheritDoc}
+     * <p/>
+     * Resolves info for the given metadata and caches the result.
+     * 
+     * @param metadata
+     * @param monitor
+     * @return Created or cached info instance.
+     */
+    @Override
+    public CompletableFuture<IResolvableInfo> resolve( IMetadata metadata ) {
+        return resolved.computeIfAbsent( metadata, key -> {
+            return IMetadataResourceResolver.super.resolve( metadata );
+        });
+    }
+
     
+    @Override
+    public IResolvableInfo resolve( IMetadata metadata, IProgressMonitor monitor ) throws Exception {
+        for (IMetadataResourceResolver resolver : resolvers) {
+            if (resolver.canResolve( metadata ) ) {
+                try {
+                    return resolver.resolve( metadata, monitor );
+                }
+                catch (Exception e) {
+                    log.warn( "", e );
+                }
+            }            
+        }
+        throw new IllegalStateException( "Unable to resolve: " + metadata );
+    }
+
+
     @Override
     public boolean canResolve( IMetadata metadata ) {
         return resolved.get( metadata ) == null
@@ -216,33 +255,9 @@ public class AllResolver
                 : true;
     }
 
-    
-    /**
-     * Resolves info for the given metadata and caches the result.
-     * <p>
-     * This usually <b>blocks</b> execution until backend service is available and/or connected.
-     * 
-     * @param metadata
-     * @param monitor
-     * @return Created or cached info instance.
-     */
-    @Override
-    public IResolvableInfo resolve( IMetadata metadata, IProgressMonitor monitor ) throws Exception {
-        return resolved.get( metadata, key -> {
-            for (IMetadataResourceResolver resolver : resolvers) {
-                if (resolver.canResolve( metadata ) ) {
-                    return resolver.resolve( metadata, monitor );
-                }            
-            }
-            return (IResolvableInfo)null;
-        });
-    }
-
-    
     @Override
     public Map<String,String> createParams( Object service ) {
-        // XXX Auto-generated method stub
-        throw new RuntimeException( "not yet implemented." );
+        throw new RuntimeException( "Not yet implemented for AllResolver." );
     }
     
 }
