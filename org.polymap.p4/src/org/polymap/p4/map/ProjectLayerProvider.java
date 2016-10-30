@@ -24,6 +24,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 
 import org.polymap.core.data.feature.DefaultStyles;
 import org.polymap.core.data.feature.FeatureRenderProcessor2;
@@ -34,8 +35,6 @@ import org.polymap.core.mapeditor.ILayerProvider;
 import org.polymap.core.mapeditor.MapViewer;
 import org.polymap.core.mapeditor.services.SimpleWmsServer;
 import org.polymap.core.project.ILayer;
-import org.polymap.core.runtime.BlockingReference2;
-import org.polymap.core.runtime.UIJob;
 import org.polymap.p4.P4Plugin;
 import org.polymap.p4.catalog.AllResolver;
 import org.polymap.p4.data.P4PipelineIncubator;
@@ -57,9 +56,9 @@ public class ProjectLayerProvider
 
     private static Log log = LogFactory.getLog( ProjectLayerProvider.class );
 
-    private String                                      alias;
+    private String                          alias;
     
-    private Map<String,BlockingReference2<Pipeline>>    pipelines = new ConcurrentHashMap();
+    private Map<String,ILayer>              layers = new ConcurrentHashMap();
     
     
     public ProjectLayerProvider() {
@@ -73,7 +72,7 @@ public class ProjectLayerProvider
                 }
                 @Override
                 protected Pipeline createPipeline( String layerName ) {
-                    return pipelines.get( layerName ).waitAndGet();
+                    return ProjectLayerProvider.this.createPipeline( layerName );
                 }
             }, null, null );
         }
@@ -83,48 +82,44 @@ public class ProjectLayerProvider
     }
 
     
-    protected String createPipeline( ILayer layer ) {
-        String layerName = layer.label.get();
-        pipelines.computeIfAbsent( layerName, key -> {
-            BlockingReference2<Pipeline> emptyRef = new BlockingReference2();
+    protected Pipeline createPipeline( String layerName ) {
+        try {
+            ILayer layer = layers.get( layerName );
+            
+            // resolve service
+            IProgressMonitor monitor = new NullProgressMonitor();  //.monitorOfThread();
+            DataSourceDescription dsd = AllResolver.instance().connectLayer( layer, monitor )
+                    .orElseThrow( () -> new RuntimeException( "No data source for layer: " + layer ) );
 
-            new UIJob( layerName ) {
-                @Override
-                protected void runWithException( IProgressMonitor monitor ) throws Exception {
-                    // resolve service
-                    DataSourceDescription dsd = AllResolver.instance().connectLayer( layer, monitor )
-                            .orElseThrow( () -> new RuntimeException( "No data source for layer: " + layer ) );
-
-                    // feature style
-                    Supplier<Style> styleSupplier = () -> {
-                        String styleId = layer.styleIdentifier.get();
-                        if (styleId != null) {
-                            return P4Plugin.styleRepo().serializedFeatureStyle( styleId, Style.class ).get();
-                        }
-                        else {
-                            return new DefaultStyles().createAllStyle();
-                        }
-                    };
-                    
-                    // create pipeline for it
-                    Pipeline pipeline = P4PipelineIncubator.forLayer( layer )
-                            .addProperty( FeatureRenderProcessor2.STYLE_SUPPLIER, styleSupplier )
-                            .newPipeline( EncodedImageProducer.class, dsd, null );
-                    assert pipeline != null && pipeline.length() > 0 : "Unable to build pipeline for: " + dsd;
-                    emptyRef.set( pipeline );
+            // feature style
+            Supplier<Style> styleSupplier = () -> {
+                String styleId = layer.styleIdentifier.get();
+                if (styleId != null) {
+                    return P4Plugin.styleRepo().serializedFeatureStyle( styleId, Style.class ).get();
                 }
-            }.schedule();
+                else {
+                    return new DefaultStyles().createAllStyle();
+                }
+            };
 
-            return emptyRef;            
-        });
-        return layerName;
+            // create pipeline for it
+            Pipeline pipeline = P4PipelineIncubator.forLayer( layer )
+                    .addProperty( FeatureRenderProcessor2.STYLE_SUPPLIER, styleSupplier )
+                    .newPipeline( EncodedImageProducer.class, dsd, null );
+            assert pipeline != null && pipeline.length() > 0 : "Unable to build pipeline for: " + dsd;
+            return pipeline;
+        }
+        catch (Exception e) {
+            log.warn( "", e );
+            return null;
+        }
     }
 
 
     @Override
     public Layer getLayer( ILayer elm ) {
-        // start creating pipeline
-        String layerName = createPipeline( elm );
+        String layerName = elm.label.get();
+        layers.put( layerName, elm );
         return buildTiledLayer( layerName );
     }
     
