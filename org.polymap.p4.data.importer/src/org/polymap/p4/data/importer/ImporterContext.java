@@ -303,10 +303,12 @@ public class ImporterContext
             public void done( IJobChangeEvent ev ) {
                 if (ev == null || ev.getResult().isOK()) {
                     asyncFast( () -> {
-                        UIUtils.disposeChildren( parent );
-                        parent.setLayout( new FillLayout( SWT.VERTICAL ) );
-                        importer.createResultViewer( parent, tk );
-                        parent.layout( true );
+                        if (!parent.isDisposed()) {
+                            UIUtils.disposeChildren( parent );
+                            parent.setLayout( new FillLayout( SWT.VERTICAL ) );
+                            importer.createResultViewer( parent, tk );
+                            parent.layout( true );
+                        }
                     });
                 }
             }

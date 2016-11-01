@@ -69,11 +69,11 @@ public class ImporterMonitor
 
         msg = new Label( parent, SWT.CENTER );
         msg.setLayoutData( FormDataFactory.filled().top( wheel, 10 ).create() );
-        update();
+        update( false );
     }
 
-    protected void update() {
-        if (updated.elapsedTime() < 2000) {
+    protected void update( boolean throttle ) {
+        if (throttle && updated.elapsedTime() < 2000) {
             return;
         }
         updated.start();
@@ -98,25 +98,25 @@ public class ImporterMonitor
     public void beginTask( String name, int totalWork ) {
         this.taskName = name;
         this.total = totalWork;
-        update();
+        update( false );
     }
 
     @Override
     public void setTaskName( String name ) {
         this.taskName = name;
-        update();
+        update( false );
     }
 
     @Override
     public void subTask( String name ) {
         this.subTaskName = name;
-        update();
+        update( true );
     }
 
     @Override
     public void worked( int work ) {
         worked += work;
-        update();
+        update( true );
     }
     
 }

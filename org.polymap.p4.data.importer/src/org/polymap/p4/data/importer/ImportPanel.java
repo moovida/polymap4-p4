@@ -61,7 +61,6 @@ import org.eclipse.rap.rwt.dnd.ClientFileTransfer;
 import org.polymap.core.operation.DefaultOperation;
 import org.polymap.core.operation.OperationSupport;
 import org.polymap.core.runtime.Timer;
-import org.polymap.core.runtime.UIThreadExecutor;
 import org.polymap.core.runtime.event.EventHandler;
 import org.polymap.core.runtime.event.EventManager;
 import org.polymap.core.runtime.i18n.IMessages;
@@ -287,7 +286,7 @@ public class ImportPanel
         context.execute( new NullProgressMonitor() );
         
         nextContext.set( context );
-        getContext().openPanel( site().path(), ImportPanel.ID );        
+        getContext().openPanel( site().path(), ImportPanel.ID );
     }
     
     
@@ -345,6 +344,8 @@ public class ImportPanel
     public void uploadStarted( ClientFile clientFile, InputStream in ) throws Exception {
         log.info( clientFile.getName() + " - " + clientFile.getType() + " - " + clientFile.getSize() );
 
+        uploadProgress( resultSection.getBody(), -1 );
+        
         // upload file
         assert clientFile.getName() != null : "Null client file name is not supported yet.";
         File f = new File( tempDir, clientFile.getName() );
@@ -361,15 +362,10 @@ public class ImportPanel
                 if (timer.elapsedTime() > 2000) {
                     Composite parent = resultSection.getBody();
                     if (parent.isDisposed()) {
-                        break;
+                        break;  // stop uploading
                     }
                     else {
-                        UIThreadExecutor.async( () -> {
-                            parent.setLayout( new FillLayout( SWT.VERTICAL ) );
-                            UIUtils.disposeChildren( parent );
-                            tk().createFlowText( parent, "Uploading... " + byteCountToDisplaySize( count.get() ) );
-                            parent.layout();
-                        });
+                        uploadProgress( resultSection.getBody(), count.get() );
                         timer.start();
                     }
                 }
@@ -386,6 +382,16 @@ public class ImportPanel
         });
     }
 
+    
+    private void uploadProgress( Composite parent, long bytes ) {
+        parent.getDisplay().asyncExec( () -> {
+            parent.setLayout( new FillLayout( SWT.VERTICAL ) );
+            UIUtils.disposeChildren( parent );
+            tk().createFlowText( parent, "Uploading... " + (bytes >=0 ? byteCountToDisplaySize( bytes ) : "") );
+            parent.layout();
+        });        
+    }
+    
     
     protected DropTargetAdapter createDropTargetAdapter() {
         return new DropTargetAdapter() {
