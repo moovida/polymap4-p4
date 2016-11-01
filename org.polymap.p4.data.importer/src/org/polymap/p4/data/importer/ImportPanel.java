@@ -222,9 +222,14 @@ public class ImportPanel
         
         // result viewer
         resultSection = tk.createPanelSection( parent, "Data preview", SWT.BORDER );
-        tk.createFlowText( resultSection.getBody(), "No data to preview yet.\n\n" +
-                "Please drop a **data** file (CSV, Excel, Shapefile, KML/KMZ, GeoJSON) or an **archive** (ZIP, TAR, TGZ) archive above. " +
-                "Or choose one of the **service** importers.");
+        if (!nextContext.isPresent()) {
+            tk.createFlowText( resultSection.getBody(), "No data to preview yet.\n\n" +
+                    "Please drop a **data** file (CSV, Excel, Shapefile, KML/KMZ, GeoJSON) or an **archive** (ZIP, TAR, TGZ) archive above. " +
+                    "Or choose one of the **service** importers.");
+        }
+        else {
+            tk.createFlowText( resultSection.getBody(), "No valid data to import found.\n\n" );
+        }
         
         // layout
         if (upload != null) {
@@ -344,7 +349,7 @@ public class ImportPanel
     public void uploadStarted( ClientFile clientFile, InputStream in ) throws Exception {
         log.info( clientFile.getName() + " - " + clientFile.getType() + " - " + clientFile.getSize() );
 
-        uploadProgress( resultSection.getBody(), -1 );
+        uploadProgress( resultSection.getBody(), "Uploading ..." );
         
         // upload file
         assert clientFile.getName() != null : "Null client file name is not supported yet.";
@@ -365,13 +370,15 @@ public class ImportPanel
                         break;  // stop uploading
                     }
                     else {
-                        uploadProgress( resultSection.getBody(), count.get() );
+                        uploadProgress( resultSection.getBody(), "Uploading ..." + byteCountToDisplaySize( count.get() ) );
                         timer.start();
                     }
                 }
             }
+            uploadProgress( resultSection.getBody(), "Upload ...complete." );
         }
         catch (Exception e) {
+            uploadProgress( resultSection.getBody(), "Upload ...failed." );
             async( () -> site().toolkit().createSnackbar( Appearance.FadeIn, "Unable to upload file." ) );
             return;
         }
@@ -383,12 +390,14 @@ public class ImportPanel
     }
 
     
-    private void uploadProgress( Composite parent, long bytes ) {
+    private void uploadProgress( Composite parent, String msg ) {
         parent.getDisplay().asyncExec( () -> {
-            parent.setLayout( new FillLayout( SWT.VERTICAL ) );
-            UIUtils.disposeChildren( parent );
-            tk().createFlowText( parent, "Uploading... " + (bytes >=0 ? byteCountToDisplaySize( bytes ) : "") );
-            parent.layout();
+            if (!parent.isDisposed()) {
+                parent.setLayout( new FillLayout( SWT.VERTICAL ) );
+                UIUtils.disposeChildren( parent );
+                tk().createFlowText( parent, msg );
+                parent.layout();
+            }
         });        
     }
     
