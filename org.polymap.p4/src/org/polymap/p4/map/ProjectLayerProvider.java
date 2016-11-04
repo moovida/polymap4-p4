@@ -94,12 +94,9 @@ public class ProjectLayerProvider
             // feature style
             Supplier<Style> styleSupplier = () -> {
                 String styleId = layer.styleIdentifier.get();
-                if (styleId != null) {
-                    return P4Plugin.styleRepo().serializedFeatureStyle( styleId, Style.class ).get();
-                }
-                else {
-                    return new DefaultStyles().createAllStyle();
-                }
+                return styleId != null
+                    ? P4Plugin.styleRepo().serializedFeatureStyle( styleId, Style.class ).get()
+                    : DefaultStyles.createAllStyle();
             };
 
             // create pipeline for it
