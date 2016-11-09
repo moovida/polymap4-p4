@@ -224,7 +224,7 @@ public class ImportPanel
         resultSection = tk.createPanelSection( parent, "Data preview", SWT.BORDER );
         if (!nextContext.isPresent()) {
             tk.createFlowText( resultSection.getBody(), "No data to preview yet.\n\n" +
-                    "Please drop a **data** file (CSV, Excel, Shapefile, KML/KMZ, GeoJSON) or an **archive** (ZIP, TAR, TGZ) archive above. " +
+                    "Please upload a **data file** (CSV, MS Excel, Shapefile, KML/KMZ, GeoJSON) or an **archive** (ZIP, TAR, TGZ). " +
                     "Or choose one of the **service** importers.");
         }
         else {
