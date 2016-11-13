@@ -32,6 +32,7 @@ import org.polymap.rhei.batik.toolkit.MinWidthConstraint;
 import org.polymap.rhei.field.FormFieldEvent;
 import org.polymap.rhei.field.IFormFieldListener;
 import org.polymap.rhei.field.TextFormField;
+import org.polymap.rhei.field.VerticalFieldLayout;
 import org.polymap.rhei.form.DefaultFormPage;
 import org.polymap.rhei.form.IFormPageSite;
 import org.polymap.rhei.form.batik.BatikFormContainer;
@@ -91,21 +92,24 @@ public class LayerInfoDashlet
             
             site.addFieldListener( this );
             
+            site.setDefaultFieldLayout( VerticalFieldLayout.INSTANCE );
+            
             Composite body = site.getPageBody();
             body.setLayout( ColumnLayoutFactory.defaults()
-                    .spacing( 5 /*panelSite.getLayoutPreference( LAYOUT_SPACING_KEY ) / 4*/ )
+                    .spacing( 8 /*panelSite.getLayoutPreference( LAYOUT_SPACING_KEY ) / 4*/ )
                     .margins( 0 /*getSite().getLayoutPreference().getSpacing() / 2 )*/ ).create() );
-            
+
             ColumnDataFactory.on( site.getToolkit().createLabel( body, 
-                    "Basic information about this layer. This should help you, your team-mates and other users to find and identify the data." +
-                    "<br/><br/>All the information are publicly readable.", SWT.WRAP ) )
-                    .heightHint( 80 ).widthHint( 100 ).control()
+                    "Basic information about this layer. This should help you, your team-mates and other users to find, identify and evaluate the data." +
+                    " All information are <b>publicly</b> readable.", SWT.WRAP ) )
+                    .heightHint( 60 ).widthHint( 100 ).control()
                     .setEnabled( false );
             
             // label/title
             site.newFormField( new PropertyAdapter( layer.label ) )
                     .label.put( "Title" )
-                    .tooltip.put( "The humand readable title of this layer" )
+                    .tooltip.put( "The human readable title of this layer" )
+                    //.layoutData
                     .create();
             
             // description
@@ -113,15 +117,15 @@ public class LayerInfoDashlet
                     .label.put( "Description" )
                     .tooltip.put( "Describes the content and purpose of this layer" )
                     .field.put( new TextFormField() )
-                    .create().setLayoutData( new ColumnLayoutData( SWT.DEFAULT, 80 ) );
+                    .create().setLayoutData( new ColumnLayoutData( SWT.DEFAULT, 100 ) );
             
             // keywords
             site.newFormField( new PropertyAdapter( layer.keywords ) )
                     .label.put( "Keywords" )
-                    .tooltip.put( "Comma separated list of keywords helping other users to identify and search this layer" )
+                    .tooltip.put( "Comma separated list of keywords.<br/>Help other users to identify and search this layer." )
                     .validator.put( new KeywordsValidator() )
-                    .field.put( new TextFormField() )
-                    .create().setLayoutData( new ColumnLayoutData( SWT.DEFAULT, 80 ) );
+                    //.field.put( new TextFormField() )
+                    .create(); //.setLayoutData( new ColumnLayoutData( SWT.DEFAULT, 80 ) );
         }
 
         @Override

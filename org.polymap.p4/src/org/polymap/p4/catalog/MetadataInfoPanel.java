@@ -26,6 +26,7 @@ import org.eclipse.jface.viewers.ViewerCell;
 
 import org.polymap.core.catalog.IMetadata;
 import org.polymap.core.catalog.resolve.IResourceInfo;
+import org.polymap.core.catalog.ui.MetadataContentProvider;
 import org.polymap.core.catalog.ui.MetadataDescriptionProvider;
 import org.polymap.core.catalog.ui.MetadataLabelProvider;
 import org.polymap.core.project.IMap;
@@ -89,7 +90,7 @@ public class MetadataInfoPanel
     @Override
     public void createContents( Composite parent ) {
         site().title.set( md.get().getTitle() );
-        site().setSize( SIDE_PANEL_WIDTH, SIDE_PANEL_WIDTH*5/4, SIDE_PANEL_WIDTH*3/2 );
+        site().setSize( SIDE_PANEL_WIDTH, SIDE_PANEL_WIDTH2, SIDE_PANEL_WIDTH*3/2 );
         ContributionManager.instance().contributeTo( this, this );
         
         dashboard = new Dashboard( getSite(), DASHBOARD_ID );
@@ -124,7 +125,7 @@ public class MetadataInfoPanel
         public void createContents( Composite parent ) {
             parent.setLayout( FormLayoutFactory.defaults().create() );
             viewer = tk().createListViewer( parent, SWT.VIRTUAL, SWT.FULL_SELECTION, SWT.SINGLE );
-            viewer.setContentProvider( new P4MetadataContentProvider( P4Plugin.allResolver() ) );
+            viewer.setContentProvider( new MetadataContentProvider( P4Plugin.allResolver() ) );
             viewer.firstLineLabelProvider.set( new MetadataLabelProvider() );
             viewer.secondLineLabelProvider.set( new MetadataDescriptionProvider() );
             viewer.iconProvider.set( new MetadataIconProvider() );

@@ -52,9 +52,11 @@ import org.polymap.recordstore.lucene.LuceneRecordStore;
  */
 public class ProjectRepository {
 
-    private static Log log = LogFactory.getLog( ProjectRepository.class );
+    private static final Log log = LogFactory.getLog( ProjectRepository.class );
+    
+    public static final String          ROOT_MAP_ID = "root";
 
-    private static EntityRepository         repo;
+    private static EntityRepository     repo;
 
     static {
         try {
@@ -96,7 +98,7 @@ public class ProjectRepository {
             IMap map = uow.entity( IMap.class, "root" );
             if (map == null) {
                 // The one and only project of a P4 instance
-                map = uow.createEntity( IMap.class, "root", (IMap proto) -> {
+                map = uow.createEntity( IMap.class, ROOT_MAP_ID, (IMap proto) -> {
                     proto.label.set( "Project" );
                     proto.srsCode.set( srs );
                     proto.maxExtent.createValue( EnvelopeComposite.defaults( maxExtent ) );

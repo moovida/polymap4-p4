@@ -42,7 +42,6 @@ import org.polymap.rhei.batik.BatikApplication;
 import org.polymap.rhei.batik.BatikPlugin;
 import org.polymap.rhei.batik.Context;
 import org.polymap.rhei.batik.PanelIdentifier;
-import org.polymap.rhei.batik.PanelPath;
 import org.polymap.rhei.batik.Scope;
 import org.polymap.rhei.batik.app.SvgImageRegistryHelper;
 import org.polymap.rhei.batik.contribution.ContributionManager;
@@ -58,8 +57,6 @@ import org.polymap.rhei.batik.toolkit.Snackbar.Appearance;
 
 import org.polymap.p4.P4Panel;
 import org.polymap.p4.P4Plugin;
-import org.polymap.p4.catalog.MetadataInfoDashlet;
-import org.polymap.p4.catalog.ResourceInfoDashlet;
 import org.polymap.p4.project.ProjectRepository;
 
 /**
@@ -92,7 +89,7 @@ public class LayerInfoPanel
 
     @Override
     public void createContents( Composite parent ) {
-        site().setSize( SIDE_PANEL_WIDTH, SIDE_PANEL_WIDTH2, SIDE_PANEL_WIDTH2 );
+        site().setSize( SIDE_PANEL_WIDTH, SIDE_PANEL_WIDTH, SIDE_PANEL_WIDTH2 );
         site().title.set( "Layer" ); // + layer.get().label.get() );
         ContributionManager.instance().contributeTo( this, this );
 
@@ -102,20 +99,20 @@ public class LayerInfoPanel
                 .addConstraint( new PriorityConstraint( 100 ) ) );
         dashboard.addDashlet( new DeleteLayerDashlet()
                 .addConstraint( new PriorityConstraint( 0 ) ) );
-        try {
-            NullProgressMonitor monitor = new NullProgressMonitor();
-            P4Plugin.allResolver().metadata( layer.get(), monitor ).ifPresent( serviceInfo -> {
-                dashboard.addDashlet( new MetadataInfoDashlet( serviceInfo )
-                        .addConstraint( new PriorityConstraint( 9 ) ) );            
-            });
-            P4Plugin.allResolver().resInfo( layer.get(), monitor ).ifPresent( resInfo -> {
-                dashboard.addDashlet( new ResourceInfoDashlet( resInfo )
-                        .addConstraint( new PriorityConstraint( 10 ) ) );            
-            });
-        }
-        catch (Exception e) {
-            log.warn( "", e );
-        }
+//        try {
+//            NullProgressMonitor monitor = new NullProgressMonitor();
+//            P4Plugin.allResolver().metadata( layer.get(), monitor ).ifPresent( serviceInfo -> {
+//                dashboard.addDashlet( new MetadataInfoDashlet( serviceInfo )
+//                        .addConstraint( new PriorityConstraint( 9 ) ) );            
+//            });
+//            P4Plugin.allResolver().resInfo( layer.get(), monitor ).ifPresent( resInfo -> {
+//                dashboard.addDashlet( new ResourceInfoDashlet( resInfo )
+//                        .addConstraint( new PriorityConstraint( 10 ) ) );            
+//            });
+//        }
+//        catch (Exception e) {
+//            log.warn( "", e );
+//        }
         dashboard.createContents( parent );
 
         // fab
@@ -197,8 +194,7 @@ public class LayerInfoPanel
 
                     OperationSupport.instance().execute2( op, true, false, ev2 -> asyncFast( () -> {
                         if (ev2.getResult().isOK()) {
-                            PanelPath parentPath = site().path().removeLast( 1 );
-                            BatikApplication.instance().getContext().closePanel( parentPath );
+                            BatikApplication.instance().getContext().closePanel( site().path() );
 
 //                            // close panel and parent, assuming that projct map is root
 //                            getContext().openPanel( PanelPath.ROOT, new PanelIdentifier( "start" ) );

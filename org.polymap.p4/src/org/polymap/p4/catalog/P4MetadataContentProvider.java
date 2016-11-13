@@ -16,9 +16,6 @@ package org.polymap.p4.catalog;
 
 import java.util.Optional;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import org.eclipse.jface.viewers.IContentProvider;
 
 import org.polymap.core.catalog.DefaultMetadata;
@@ -31,18 +28,17 @@ import org.polymap.core.catalog.ui.MetadataContentProvider;
  * Creates a dummy entry if not {@link LocalCatalog} and
  * {@link IMetadataCatalog#ALL_QUERY}.
  *
+ * @deprecated In favour of ConnectedCswMetadataCatalog
  * @author Falko Bräutigam
  */
 public class P4MetadataContentProvider
         extends MetadataContentProvider
         implements IContentProvider {
 
-    private static final Log log = LogFactory.getLog( P4MetadataContentProvider.class );
-
     /**
      * 
      */
-    public static final IMetadata DUMMY = new DefaultMetadata() {
+    public static final IMetadata DUMMY = new DefaultMetadata( null ) {
         @Override
         public String getTitle() {
             return "A lot of entries...";

@@ -43,6 +43,7 @@ import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 
 import org.polymap.core.runtime.SubMonitor;
 import org.polymap.core.runtime.UIJob;
+import org.polymap.core.runtime.UIThreadExecutor;
 import org.polymap.core.runtime.config.Configurable;
 import org.polymap.core.runtime.event.EventHandler;
 import org.polymap.core.runtime.event.EventManager;
@@ -73,7 +74,7 @@ import org.polymap.p4.data.importer.wms.WmsImporterFactory;
 public class ImporterContext
         extends Configurable {
 
-    private static Log log = LogFactory.getLog( ImporterContext.class );
+    private static final Log log = LogFactory.getLog( ImporterContext.class );
     
     // XXX make this an extension point
     private static final Class[]            FACTORIES = { 
@@ -214,6 +215,10 @@ public class ImporterContext
             asyncFast( () -> updateResultViewer( resultViewerParent, resultViewerTk ) );
         }
         verifier.scheduleWithUIUpdate();
+        // FIXME totally weird hack: the above scheduleWithUIUpdate() did a
+        // syncFast() in previous version (which was wrong anyway); this is now gone
+        // but this code here seems to need it to display prompts properly
+        UIThreadExecutor.syncFast( () -> log.info( "SYNC" ) );
     }
     
     

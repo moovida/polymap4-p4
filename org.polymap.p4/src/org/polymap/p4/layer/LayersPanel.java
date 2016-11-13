@@ -1,6 +1,6 @@
 /* 
  * polymap.org
- * Copyright (C) 2015, Falko Bräutigam. All rights reserved.
+ * Copyright (C) 2015-2016, Falko Bräutigam. All rights reserved.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -15,7 +15,6 @@
 package org.polymap.p4.layer;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.polymap.core.project.ui.ProjectNodeLabelProvider.PropType.Description;
 import static org.polymap.core.project.ui.ProjectNodeLabelProvider.PropType.Label;
 import static org.polymap.core.runtime.event.TypeEventFilter.ifType;
 import static org.polymap.rhei.batik.app.SvgImageRegistryHelper.NORMAL24;
@@ -45,7 +44,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 
-import org.polymap.core.mapeditor.MapViewer;
 import org.polymap.core.operation.DefaultOperation;
 import org.polymap.core.operation.OperationSupport;
 import org.polymap.core.project.ILayer;
@@ -81,12 +79,12 @@ import org.polymap.p4.map.ProjectMapPanel;
 /**
  * 
  *
- * @author <a href="http://www.polymap.de">Falko Bräutigam</a>
+ * @author Falko Bräutigam
  */
 public class LayersPanel
         extends P4Panel {
 
-    private static Log log = LogFactory.getLog( LayersPanel.class );
+    private static final Log log = LogFactory.getLog( LayersPanel.class );
 
     protected static final IMessages    i18n = Messages.forPrefix( "LayersPanel" );
 
@@ -102,10 +100,12 @@ public class LayersPanel
     
     private MdListViewer                viewer;
     
-    /** The {@link MapViewer} of the parent panel ({@link ProjectMapPanel}). */
-    private MapViewer<ILayer>           mapViewer;
-
     
+    public MdListViewer getViewer() {
+        return viewer;
+    }
+
+
     @Override
     public boolean beforeInit() {
         if (parentPanel().orElse( null ) instanceof ProjectMapPanel) {
@@ -116,12 +116,6 @@ public class LayersPanel
         return false;
     }
 
-
-    @Override
-    public void init() {
-        super.init();
-        mapViewer = ((ProjectMapPanel)parentPanel().get()).mapViewer;
-    }
 
     @Override
     public void dispose() {
@@ -139,7 +133,7 @@ public class LayersPanel
         viewer.setContentProvider( new ProjectNodeContentProvider() );
 
         viewer.firstLineLabelProvider.set( new ProjectNodeLabelProvider( Label ).abbreviate.put( 35 ) );
-        viewer.secondLineLabelProvider.set( new ProjectNodeLabelProvider( Description ).abbreviate.put( 35 ) );
+        //viewer.secondLineLabelProvider.set( new ProjectNodeLabelProvider( Description ).abbreviate.put( 35 ) );
         viewer.iconProvider.set( new LayerIconProvider() );
         
         viewer.firstSecondaryActionProvider.set( new LayerVisibleAction());
@@ -151,10 +145,10 @@ public class LayersPanel
             public void open( OpenEvent ev ) {
                 SelectionAdapter.on( ev.getSelection() ).forEach( elm -> {
                     selected.set( (ILayer)elm );
-                    getContext().openPanel( getSite().getPath(), LayerInfoPanel.ID );                        
+                    getContext().openPanel( site().path(), LayerInfoPanel.ID );
                 });
             }
-        } );
+        });
         
 //        int operations = DND.DROP_MOVE | DND.DROP_COPY | DND.DROP_DEFAULT | DND.DROP_LINK;
 //        DropTarget target = new DropTarget( viewer.getControl(), operations );
@@ -166,7 +160,7 @@ public class LayersPanel
         viewer.setInput( map.get() );
 
         // avoid empty rows and lines
-        viewer.getTree().setLayoutData( FormDataFactory.filled().noBottom().create() );
+        viewer.getTree().setLayoutData( FormDataFactory.filled()/*.noBottom()*/.create() );
         
         // listen to ILayer changes
         EventManager.instance().subscribe( this, ifType( PropertyChangeEvent.class, 

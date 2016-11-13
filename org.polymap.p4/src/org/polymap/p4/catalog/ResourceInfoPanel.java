@@ -95,11 +95,10 @@ public class ResourceInfoPanel
     private Dashboard                   dashboard;
 
     
-
     @Override
     public void createContents( Composite parent ) {
         site().title.set( res.get().getTitle() );
-        site().setSize( SIDE_PANEL_WIDTH, SIDE_PANEL_WIDTH*5/4, SIDE_PANEL_WIDTH*3/2 );
+        site().setSize( SIDE_PANEL_WIDTH, SIDE_PANEL_WIDTH2, SIDE_PANEL_WIDTH*3/2 );
         ContributionManager.instance().contributeTo( this, this );
         
         dashboard = new Dashboard( getSite(), DASHBOARD_ID );

@@ -27,6 +27,7 @@ import org.eclipse.jface.viewers.ViewerCell;
 
 import org.polymap.core.catalog.IMetadata;
 import org.polymap.core.catalog.resolve.IResourceInfo;
+import org.polymap.core.catalog.ui.MetadataContentProvider;
 import org.polymap.core.catalog.ui.MetadataDescriptionProvider;
 import org.polymap.core.catalog.ui.MetadataLabelProvider;
 import org.polymap.core.project.IMap;
@@ -45,9 +46,8 @@ import org.polymap.rhei.batik.toolkit.ClearTextAction;
 import org.polymap.rhei.batik.toolkit.TextActionItem;
 import org.polymap.rhei.batik.toolkit.TextActionItem.Type;
 import org.polymap.rhei.batik.toolkit.md.ActionProvider;
+import org.polymap.rhei.batik.toolkit.md.TreeExpandStateDecorator;
 import org.polymap.rhei.batik.toolkit.md.MdListViewer;
-import org.polymap.rhei.batik.toolkit.md.MdToolkit;
-
 import org.polymap.p4.P4Panel;
 import org.polymap.p4.P4Plugin;
 import org.polymap.p4.layer.NewLayerContribution;
@@ -79,6 +79,11 @@ public class CatalogPanel
     private Context<IMap>               map;
     
 
+    public MdListViewer getViewer() {
+        return viewer;
+    }
+
+
     @Override
     public boolean wantsToBeShown() {
         return parentPanel()
@@ -97,12 +102,14 @@ public class CatalogPanel
     public void createContents( Composite parent ) {
         site().title.set( "Catalogs" );
         site().setSize( SIDE_PANEL_WIDTH, SIDE_PANEL_WIDTH, SIDE_PANEL_WIDTH );
-        parent.setLayout( FormLayoutFactory.defaults().margins( 0, 5 ).create() );
+        parent.setLayout( FormLayoutFactory.defaults().margins( 0, 0 ).create() );
         
         // tree/list viewer
-        viewer = ((MdToolkit)getSite().toolkit()).createListViewer( parent, SWT.VIRTUAL, SWT.FULL_SELECTION, SWT.SINGLE );
-        viewer.setContentProvider( new P4MetadataContentProvider( P4Plugin.allResolver() ) );
-        viewer.firstLineLabelProvider.set( new MetadataLabelProvider() );
+        viewer = tk().createListViewer( parent, SWT.VIRTUAL, SWT.FULL_SELECTION, SWT.SINGLE );
+        viewer.linesVisible.set( true );
+        viewer.setContentProvider( new MetadataContentProvider( P4Plugin.allResolver() ) );
+        viewer.firstLineLabelProvider.set( new TreeExpandStateDecorator(
+                viewer, new MetadataLabelProvider() ) );
         viewer.secondLineLabelProvider.set( new MetadataDescriptionProvider() );
         viewer.iconProvider.set( new MetadataIconProvider() );
         viewer.firstSecondaryActionProvider.set( new CreateLayerAction() );
@@ -128,7 +135,7 @@ public class CatalogPanel
     protected void doSearch( String query ) {
         log.info( "doSearch(): ..." );
         
-        P4MetadataContentProvider cp = (P4MetadataContentProvider)viewer.getContentProvider();
+        MetadataContentProvider cp = (MetadataContentProvider)viewer.getContentProvider();
         cp.catalogQuery.set( query );
         cp.flush();
         
@@ -142,16 +149,20 @@ public class CatalogPanel
     @Override
     public void open( OpenEvent ev ) {
         SelectionAdapter.on( ev.getSelection() ).forEach( elm -> {
-            if (elm instanceof IMetadata) {
-                selectedMetadata.set( (IMetadata)elm );
-                getContext().openPanel( getSite().getPath(), MetadataInfoPanel.ID );                        
-            }
-            else if (elm instanceof IResourceInfo) {
-                selectedResource.set( (IResourceInfo)elm );
-                getContext().openPanel( getSite().getPath(), ResourceInfoPanel.ID );                        
+            boolean expanded = viewer.getExpandedState( elm );
+            if (!expanded) {
+                if (elm instanceof IMetadata) {
+                    selectedMetadata.set( (IMetadata)elm );
+                    getContext().openPanel( getSite().getPath(), MetadataInfoPanel.ID );                        
+                }
+                else if (elm instanceof IResourceInfo) {
+                    selectedResource.set( (IResourceInfo)elm );
+                    getContext().openPanel( getSite().getPath(), ResourceInfoPanel.ID );                        
+                }
+                viewer.expandToLevel( elm, 1 );
             }
             else {
-                viewer.toggleItemExpand( elm );
+                viewer.collapseToLevel( elm, 1 );
             }
         });
     }

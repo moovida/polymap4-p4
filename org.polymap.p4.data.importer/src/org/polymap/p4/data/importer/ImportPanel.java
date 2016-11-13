@@ -76,6 +76,7 @@ import org.polymap.rhei.batik.toolkit.SimpleDialog;
 import org.polymap.rhei.batik.toolkit.Snackbar.Appearance;
 import org.polymap.rhei.batik.toolkit.md.MdListViewer;
 import org.polymap.rhei.batik.toolkit.md.MdToolkit;
+import org.polymap.rhei.batik.toolkit.md.TreeExpandStateDecorator;
 
 import org.polymap.p4.P4Panel;
 import org.polymap.p4.P4Plugin;
@@ -126,6 +127,7 @@ public class ImportPanel
         return parentPanel()
                 .filter( parent -> parent instanceof CatalogPanel 
                         || parent instanceof LayersPanel
+                        //|| parent instanceof LayersCatalogsPanel
                         || parent instanceof ProjectMapPanel )
                 .map( parent -> {
                     site().title.set( "" );
@@ -194,7 +196,8 @@ public class ImportPanel
         // imports and prompts
         importsList = tk.createListViewer( parent, SWT.VIRTUAL, SWT.SINGLE | SWT.FULL_SELECTION );
         importsList.setContentProvider( new ImportsContentProvider() );
-        importsList.firstLineLabelProvider.set( new ImportsLabelProvider( Type.Summary ) );
+        importsList.firstLineLabelProvider.set( new TreeExpandStateDecorator(
+                importsList, new ImportsLabelProvider( Type.Summary ) ) );
         importsList.secondLineLabelProvider.set( new ImportsLabelProvider( Type.Description ) );
         importsList.iconProvider.set( new ImportsLabelProvider( Type.Icon ) );
         importsList.firstSecondaryActionProvider.set( new ImportsLabelProvider( Type.StatusIcon ));
