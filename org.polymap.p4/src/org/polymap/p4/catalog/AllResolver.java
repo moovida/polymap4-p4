@@ -17,13 +17,16 @@ package org.polymap.p4.catalog;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.StringTokenizer;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+
 import org.geotools.data.FeatureSource;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import com.google.common.base.Throwables;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 
@@ -36,6 +39,8 @@ import org.polymap.core.catalog.resolve.IServiceInfo;
 import org.polymap.core.catalog.resolve.ResourceResolverExtension;
 import org.polymap.core.data.pipeline.DataSourceDescription;
 import org.polymap.core.project.ILayer;
+import org.polymap.core.runtime.JobExecutor;
+import org.polymap.core.runtime.UIJob;
 import org.polymap.core.runtime.cache.Cache;
 import org.polymap.core.runtime.cache.CacheConfig;
 
@@ -60,7 +65,7 @@ public class AllResolver
 
     private static Log log = LogFactory.getLog( AllResolver.class );
 
-    public static final String                      ID_DELIMITER = "|";
+    public static final char                ID_DELIMITER = '|';
     
     /**
      * Returns {@link P4Plugin#allResolver()}.
@@ -100,10 +105,19 @@ public class AllResolver
     }
 
 
-    public String resourceIdentifier( IResourceInfo res ) {
+    public static String resourceIdentifier( IResourceInfo res ) {
         IServiceInfo serviceInfo = res.getServiceInfo();
         IMetadata metadata = serviceInfo.getMetadata();
         return metadata.getIdentifier() + ID_DELIMITER + res.getName();
+    }
+    
+    
+    /**
+     * Index 0: metadata identifier; index 1: resource name 
+     */
+    public static String[] parseResourceIdentifier( String resId ) {
+        assert resId.indexOf( ID_DELIMITER ) > 0;
+        return StringUtils.split( resId, ID_DELIMITER );
     }
     
     
@@ -124,11 +138,7 @@ public class AllResolver
         IServiceInfo serviceInfo = serviceInfo( layer, monitor ).orElse( null );
         
         if (serviceInfo != null) {
-            StringTokenizer tokens = new StringTokenizer( layer.resourceIdentifier.get(), ID_DELIMITER );
-            @SuppressWarnings( "unused" )
-            String metadataId = tokens.nextToken();
-            String resName = tokens.nextToken();
-
+            String resName = parseResourceIdentifier( layer.resourceIdentifier.get() )[1];
             Object service = serviceInfo.createService( monitor );
             
             return Optional.of( new DataSourceDescription()
@@ -139,40 +149,8 @@ public class AllResolver
     }
     
 
-    // provided by FeatureSelection
-//    /**
-//     * Connects the given layer with its backend service.
-//     *
-//     * @param layer
-//     * @param usecase
-//     * @param monitor
-//     * @return An optional {@link FeatureSource}. This is empty if no service was
-//     *         found for the given layer or if the resource of the layer does not
-//     *         support the given usecase.
-//     * @throws Exception
-//     */
-//    public Optional<PipelineFeatureSource> connectLayer( ILayer layer, Class<? extends PipelineProcessor> usecase, 
-//            IProgressMonitor monitor ) throws Exception {
-//        // resolve service
-//        Optional<DataSourceDescription> dsd = AllResolver.instance().connectLayer( layer, monitor );
-//        
-//        if (dsd.isPresent()) {
-//            // create pipeline for it
-//            Pipeline pipeline = P4PipelineIncubator.forLayer( layer ).newPipeline( usecase, dsd.get(), null );
-//            if (pipeline == null || pipeline.length() == 0) {
-//                return Optional.empty(); //throw new PipelineIncubationException( "Unable to build pipeline for: " + dsd );
-//            }
-//            return Optional.of( new PipelineFeatureSource( pipeline ) );
-//        }
-//        else {
-//            return Optional.empty();
-//        }
-//    }
-
-    
     public Optional<IMetadata> metadata( ILayer layer, IProgressMonitor monitor ) throws Exception {
-        StringTokenizer tokens = new StringTokenizer( layer.resourceIdentifier.get(), ID_DELIMITER );
-        String metadataId = tokens.nextToken();
+        String metadataId = parseResourceIdentifier( layer.resourceIdentifier.get() )[0];
         
         return Optional.ofNullable( metadataCache.get( metadataId, key -> {
             for (IMetadataCatalog catalog : catalogs) {
@@ -198,11 +176,7 @@ public class AllResolver
         IServiceInfo serviceInfo = serviceInfo( layer, monitor ).orElse( null );
         
         if (serviceInfo != null) {
-            StringTokenizer tokens = new StringTokenizer( layer.resourceIdentifier.get(), ID_DELIMITER );
-            @SuppressWarnings( "unused" )
-            String metadataId = tokens.nextToken();
-            String resName = tokens.nextToken();
-
+            String resName = parseResourceIdentifier( layer.resourceIdentifier.get() )[1];
             for (IResourceInfo info : serviceInfo.getResources( monitor )) {
                 if (info.getName().equals( resName )) {
                     return Optional.of( info );
@@ -227,21 +201,32 @@ public class AllResolver
     @Override
     public CompletableFuture<IResolvableInfo> resolve( IMetadata metadata ) {
         return resolved.computeIfAbsent( metadata, key -> {
-            return IMetadataResourceResolver.super.resolve( metadata );
+            return doResolve( metadata, null );
         });
     }
 
     
     @Override
     public IResolvableInfo resolve( IMetadata metadata, IProgressMonitor monitor ) throws Exception {
+        return resolved.computeIfAbsent( metadata, key -> {
+            return doResolve( metadata, monitor );
+        }).get();
+    }
+    
+    
+    protected CompletableFuture<IResolvableInfo> doResolve( IMetadata metadata, IProgressMonitor monitor ) {
         for (IMetadataResourceResolver resolver : resolvers) {
             if (resolver.canResolve( metadata ) ) {
-                try {
-                    return resolver.resolve( metadata, monitor );
-                }
-                catch (Exception e) {
-                    log.warn( "", e );
-                }
+                return CompletableFuture.supplyAsync( () -> {
+                    try {
+                        IProgressMonitor mon = monitor != null ? monitor : UIJob.monitorOfThread();
+                        return resolver.resolve( metadata, mon );
+                    }
+                    catch (Exception e) {
+                        log.warn( "", e );
+                        throw Throwables.propagate( e );
+                    }
+                }, JobExecutor.instance() );
             }            
         }
         throw new IllegalStateException( "Unable to resolve: " + metadata );

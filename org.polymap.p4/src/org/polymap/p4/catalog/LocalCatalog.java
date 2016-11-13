@@ -77,7 +77,7 @@ public class LocalCatalog
 
     @Override
     public String getDescription() {
-        return "Data sources of this local project";
+        return "Data sources of this project";
     }
 
 
@@ -100,7 +100,7 @@ public class LocalCatalog
     public IResolvableInfo localFeaturesStoreInfo() {
         try {
             IMetadata metadata = localFeaturesStoreEntry();
-            return P4Plugin.allResolver().resolve( metadata, new NullProgressMonitor() );
+            return P4Plugin.allResolver().resolve( metadata ).get();
         }
         catch (Exception e) {
             throw new RuntimeException( e );
