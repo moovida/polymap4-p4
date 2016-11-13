@@ -149,21 +149,15 @@ public class CatalogPanel
     @Override
     public void open( OpenEvent ev ) {
         SelectionAdapter.on( ev.getSelection() ).forEach( elm -> {
-            boolean expanded = viewer.getExpandedState( elm );
-            if (!expanded) {
-                if (elm instanceof IMetadata) {
-                    selectedMetadata.set( (IMetadata)elm );
-                    getContext().openPanel( getSite().getPath(), MetadataInfoPanel.ID );                        
-                }
-                else if (elm instanceof IResourceInfo) {
-                    selectedResource.set( (IResourceInfo)elm );
-                    getContext().openPanel( getSite().getPath(), ResourceInfoPanel.ID );                        
-                }
-                viewer.expandToLevel( elm, 1 );
+            if (elm instanceof IMetadata) {
+                selectedMetadata.set( (IMetadata)elm );
+                getContext().openPanel( getSite().getPath(), MetadataInfoPanel.ID );                        
             }
-            else {
-                viewer.collapseToLevel( elm, 1 );
+            else if (elm instanceof IResourceInfo) {
+                selectedResource.set( (IResourceInfo)elm );
+                getContext().openPanel( getSite().getPath(), ResourceInfoPanel.ID );                        
             }
+            viewer.toggleItemExpand( elm );
         });
     }
 
