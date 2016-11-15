@@ -40,7 +40,6 @@ import org.polymap.core.ui.StatusDispatcher;
 import org.polymap.rhei.batik.toolkit.DefaultToolkit;
 import org.polymap.rhei.batik.toolkit.SimpleDialog;
 
-import org.polymap.p4.P4Plugin;
 import org.polymap.p4.catalog.AllResolver;
 
 /**
@@ -109,7 +108,7 @@ public class NewLayerOperation
 
         // build resource identifier
         if (!resId.isPresent()) {
-            resId.set( P4Plugin.allResolver().resourceIdentifier( res.get() ) );
+            resId.set( AllResolver.resourceIdentifier( res.get() ) );
         }
         initializer.set( (ILayer proto) -> {
             proto.label.set( label
@@ -118,7 +117,7 @@ public class NewLayerOperation
                     .map( r -> r.getDescription().orElse( null ) )
                     .orElse( null ) );
             proto.resourceIdentifier.set( resId
-                    .orElse( () -> P4Plugin.allResolver().resourceIdentifier( res.get() ) ) );
+                    .orElse( () -> AllResolver.resourceIdentifier( res.get() ) ) );
             proto.styleIdentifier.set( featureStyle
                     .map( fs -> fs.id() )
                     .orElse( null ) );

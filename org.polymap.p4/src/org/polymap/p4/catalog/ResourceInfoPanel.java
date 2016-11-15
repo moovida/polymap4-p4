@@ -48,6 +48,7 @@ import org.polymap.rhei.batik.dashboard.DashletSite;
 import org.polymap.rhei.batik.dashboard.DefaultDashlet;
 import org.polymap.rhei.batik.toolkit.MinHeightConstraint;
 import org.polymap.rhei.batik.toolkit.MinWidthConstraint;
+import org.polymap.rhei.batik.toolkit.PriorityConstraint;
 
 import org.polymap.p4.P4Panel;
 import org.polymap.p4.P4Plugin;
@@ -102,8 +103,9 @@ public class ResourceInfoPanel
         ContributionManager.instance().contributeTo( this, this );
         
         dashboard = new Dashboard( getSite(), DASHBOARD_ID );
-        dashboard.addDashlet( new ResourceInfoDashlet( res.get() ) );
-        //dashboard.addDashlet( new MapDashlet() );
+        dashboard.addDashlet( new ResourceInfoDashlet( res.get() ).addConstraint( new PriorityConstraint( 100 ) ) );
+        dashboard.addDashlet( new PreviewMapDashlet( res.get() ) );
+        //dashboard.addDashlet( new PreviewFeaturesDashlet() );
         dashboard.createContents( parent );
         ContributionManager.instance().contributeTo( dashboard, this );
     }

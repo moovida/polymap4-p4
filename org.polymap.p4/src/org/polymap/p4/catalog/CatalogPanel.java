@@ -46,8 +46,9 @@ import org.polymap.rhei.batik.toolkit.ClearTextAction;
 import org.polymap.rhei.batik.toolkit.TextActionItem;
 import org.polymap.rhei.batik.toolkit.TextActionItem.Type;
 import org.polymap.rhei.batik.toolkit.md.ActionProvider;
-import org.polymap.rhei.batik.toolkit.md.TreeExpandStateDecorator;
 import org.polymap.rhei.batik.toolkit.md.MdListViewer;
+import org.polymap.rhei.batik.toolkit.md.TreeExpandStateDecorator;
+
 import org.polymap.p4.P4Panel;
 import org.polymap.p4.P4Plugin;
 import org.polymap.p4.layer.NewLayerContribution;

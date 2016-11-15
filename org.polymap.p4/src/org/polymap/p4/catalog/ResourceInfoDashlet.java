@@ -14,7 +14,8 @@
  */
 package org.polymap.p4.catalog;
 
-import java.io.CharArrayWriter;
+import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.referencing.CRS;
 
 import com.google.common.base.Joiner;
 
@@ -25,16 +26,18 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.forms.widgets.ColumnLayoutData;
 
 import org.polymap.core.catalog.resolve.IResourceInfo;
-import org.polymap.core.runtime.text.MarkdownBuilder;
 import org.polymap.core.ui.ColumnLayoutFactory;
 
 import org.polymap.rhei.batik.dashboard.DashletSite;
 import org.polymap.rhei.batik.dashboard.DefaultDashlet;
 import org.polymap.rhei.batik.toolkit.MinWidthConstraint;
 import org.polymap.rhei.field.PlainValuePropertyAdapter;
+import org.polymap.rhei.field.StringFormField;
 import org.polymap.rhei.field.TextFormField;
+import org.polymap.rhei.field.VerticalFieldLayout;
 import org.polymap.rhei.form.DefaultFormPage;
 import org.polymap.rhei.form.IFormPageSite;
+import org.polymap.rhei.form.batik.BatikFormContainer;
 
 import org.polymap.p4.P4Panel;
 
@@ -59,7 +62,6 @@ public class ResourceInfoDashlet
     public void init( DashletSite site ) {
         super.init( site );
         site.title.set( P4Panel.title( "Data set", res.getTitle() ) );
-        //site.constraints.get().add( new PriorityConstraint( 100 ) );
         site.constraints.get().add( new MinWidthConstraint( 400, 1 ) );
         site.border.set( false );
     }
@@ -69,17 +71,17 @@ public class ResourceInfoDashlet
     public void createContents( Composite parent ) {
         parent.setLayout( new FillLayout() );
         
-        CharArrayWriter out = new CharArrayWriter( 1024 );
-        MarkdownBuilder markdown = new MarkdownBuilder( out );
+//        CharArrayWriter out = new CharArrayWriter( 1024 );
+//        MarkdownBuilder markdown = new MarkdownBuilder( out );
+//        
+//        markdown.paragraph( res.getDescription().orElse( null ) )
+//                .join( ", ", res.getKeywords() );
+//        
+//        getSite().toolkit().createFlowText( parent, out.toString() );
         
-        markdown.paragraph( res.getDescription().orElse( null ) )
-                .join( ", ", res.getKeywords() );
-        
-        getSite().toolkit().createFlowText( parent, out.toString() );
-        
-//        BatikFormContainer form = new BatikFormContainer( new Form() );
-//        form.createContents( parent );
-//        form.setEnabled( false );
+        BatikFormContainer form = new BatikFormContainer( new Form() );
+        form.createContents( parent );
+        form.setEnabled( false );
     }
 
     
@@ -93,19 +95,30 @@ public class ResourceInfoDashlet
         public void createFormContents( IFormPageSite site ) {
             super.createFormContents( site );
 
+            site.setDefaultFieldLayout( VerticalFieldLayout.INSTANCE );
             Composite body = site.getPageBody();
             body.setLayout( ColumnLayoutFactory.defaults().spacing( 3 ).create() );
 
-//                site.newFormField( new PlainValuePropertyAdapter( "title", res.get().getTitle() ) ).create();
+            //site.newFormField( new PlainValuePropertyAdapter( "title", res.getTitle() ) ).create();
 
             site.newFormField( new PlainValuePropertyAdapter( "description", res.getDescription().orElse( "" ) ) )
                     .field.put( new TextFormField() )
                     .create().setLayoutData( new ColumnLayoutData( SWT.DEFAULT, MetadataInfoPanel.TEXTFIELD_HEIGHT ) );
 
-            String keywords = Joiner.on( ", " ).skipNulls().join( res.getKeywords() );
-            site.newFormField( new PlainValuePropertyAdapter( "keywords", keywords ) )
-                    .field.put( new TextFormField() )
-                    .create().setLayoutData( new ColumnLayoutData( SWT.DEFAULT, MetadataInfoPanel.TEXTFIELD_HEIGHT ) );
+            if (!res.getKeywords().isEmpty()) {
+                String keywords = Joiner.on( ", " ).skipNulls().join( res.getKeywords() );
+                site.newFormField( new PlainValuePropertyAdapter( "keywords", keywords ) )
+                        .field.put( new StringFormField() )
+                        .create();  //.setLayoutData( new ColumnLayoutData( SWT.DEFAULT, MetadataInfoPanel.TEXTFIELD_HEIGHT ) );
+            }
+            
+            ReferencedEnvelope bounds = res.getBounds();
+            String bs = CRS.toSRS( bounds.getCoordinateReferenceSystem() )
+                    + " : " + bounds.getMinX() + " .. " + bounds.getMaxX() + ", " + bounds.getMinY() + " .. " + bounds.getMaxY();
+            site.newFormField( new PlainValuePropertyAdapter( "bounds", bs ) )
+                    .field.put( new StringFormField() )
+                    .create();
+
         }
     }
     

@@ -115,7 +115,7 @@ public class ProjectRepository {
                             ILayer layer = uow.createEntity( ILayer.class, null, (ILayer proto) -> {
                                 proto.label.set( "World" );
                                 proto.description.set( res.getDescription().orElse( null ) );
-                                proto.resourceIdentifier.set( AllResolver.instance().resourceIdentifier( res ) );
+                                proto.resourceIdentifier.set( AllResolver.resourceIdentifier( res ) );
                                 proto.orderKey.set( 1 );
                                 return proto;
                             });

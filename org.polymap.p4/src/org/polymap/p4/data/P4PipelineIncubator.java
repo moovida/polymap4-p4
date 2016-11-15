@@ -17,9 +17,6 @@ package org.polymap.p4.data;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import org.polymap.core.data.feature.DataSourceProcessor;
 import org.polymap.core.data.feature.FeatureRenderProcessor2;
 import org.polymap.core.data.image.ImageDecodeProcessor;
@@ -42,10 +39,8 @@ public class P4PipelineIncubator
         extends DefaultPipelineIncubator
         implements PipelineIncubator {
 
-    private static Log log = LogFactory.getLog( P4PipelineIncubator.class );
-
     /** Terminal and transformer processors. */
-    private static Class<PipelineProcessor>[] procTypes = new Class[] {
+    private static final Class<PipelineProcessor>[] defaultProcTypes = new Class[] {
         ImageEncodeProcessor.class,
         ImageDecodeProcessor.class,
         FeatureRenderProcessor2.class,
@@ -56,20 +51,17 @@ public class P4PipelineIncubator
 
     
     public static P4PipelineIncubator forLayer( ILayer layer ) {
-        return new P4PipelineIncubator( layer );
+        return new P4PipelineIncubator();
     }
     
     
     // instance *******************************************
     
-    private ILayer                  layer;
-    
     private Map<String,Object>      properties = new HashMap();
     
     
-    public P4PipelineIncubator( ILayer layer ) {
-        super( procTypes );
-        this.layer = layer;
+    public P4PipelineIncubator() {
+        super( defaultProcTypes );
     }
     
 

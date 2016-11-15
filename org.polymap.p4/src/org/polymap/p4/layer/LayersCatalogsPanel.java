@@ -121,6 +121,7 @@ public class LayersCatalogsPanel
         sashForm.setWeights( weights );
         
         site().title.set( LayersPanel.i18n.get( "title" ) );
+        site().setSize( SIDE_PANEL_WIDTH/2, SIDE_PANEL_WIDTH, SIDE_PANEL_WIDTH2 );
     }
 
 

@@ -141,7 +141,7 @@ public class LayerStylePanel
     @Override
     public void init() {
         super.init();
-        site().setSize( SIDE_PANEL_WIDTH, SIDE_PANEL_WIDTH2, Integer.MAX_VALUE );
+        site().setSize( SIDE_PANEL_WIDTH, SIDE_PANEL_WIDTH, Integer.MAX_VALUE );
         try {
             featureStyle = P4Plugin.styleRepo().featureStyle( styleEditorInput.get().styleIdentifier() )
                     .orElseThrow( () -> new IllegalStateException( "Layer has no style.") );

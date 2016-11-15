@@ -18,6 +18,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
 
 import org.eclipse.jface.viewers.IOpenListener;
@@ -30,8 +31,6 @@ import org.polymap.core.catalog.ui.MetadataContentProvider;
 import org.polymap.core.catalog.ui.MetadataDescriptionProvider;
 import org.polymap.core.catalog.ui.MetadataLabelProvider;
 import org.polymap.core.project.IMap;
-import org.polymap.core.ui.FormDataFactory;
-import org.polymap.core.ui.FormLayoutFactory;
 import org.polymap.core.ui.SelectionAdapter;
 import org.polymap.core.ui.StatusDispatcher;
 
@@ -69,7 +68,7 @@ public class MetadataInfoPanel
     
     public static final String          DASHBOARD_ID = "org.polymap.p4.catalog.metadata";
     
-    public static final int             TEXTFIELD_HEIGHT = 72;
+    public static final int             TEXTFIELD_HEIGHT = 100;
     
     /** Inbound: */
     @Scope( P4Plugin.Scope )
@@ -96,7 +95,8 @@ public class MetadataInfoPanel
         dashboard = new Dashboard( getSite(), DASHBOARD_ID );
         dashboard.addDashlet( new MetadataInfoDashlet( md.get() )
                 .addConstraint( new PriorityConstraint( 100 ) ) );
-        dashboard.addDashlet( new ResourcesDashlet() );
+//        dashboard.addDashlet( new ResourcesDashlet()
+//                .addConstraint( new PriorityConstraint( 0 ) ) );
         dashboard.createContents( parent );
         ContributionManager.instance().contributeTo( dashboard, this );
     }
@@ -115,15 +115,14 @@ public class MetadataInfoPanel
         public void init( DashletSite site ) {
             super.init( site );
             site.title.set( "Data sets" );
-            site.addConstraint( new PriorityConstraint( 0 ) );
-            site.addConstraint( new MinWidthConstraint( 400, 1 ) );
-            site.constraints.get().add( new MinHeightConstraint( 400, 1 ) );
-            //site.border.set( false );
+            site.addConstraint( new MinWidthConstraint( P4Panel.SIDE_PANEL_WIDTH, 1 ) );
+            site.constraints.get().add( new MinHeightConstraint( P4Panel.SIDE_PANEL_WIDTH-50, 1 ) );
+            site.border.set( false );
         }
 
         @Override
         public void createContents( Composite parent ) {
-            parent.setLayout( FormLayoutFactory.defaults().create() );
+            parent.setLayout( new FillLayout() ); //.defaults().create() );
             viewer = tk().createListViewer( parent, SWT.VIRTUAL, SWT.FULL_SELECTION, SWT.SINGLE );
             viewer.setContentProvider( new MetadataContentProvider( P4Plugin.allResolver() ) );
             viewer.firstLineLabelProvider.set( new MetadataLabelProvider() );
@@ -134,7 +133,7 @@ public class MetadataInfoPanel
             viewer.setAutoExpandLevel( 3 );
             viewer.setInput( md.get() );
             
-            viewer.getTree().setLayoutData( FormDataFactory.filled().height( 400 ).create() );
+//            viewer.getTree().setLayoutData( FormDataFactory.filled().height( SIDE_PANEL_WIDTH-50 ).create() );
             //viewer.expandToLevel( 2 );
         }
 
