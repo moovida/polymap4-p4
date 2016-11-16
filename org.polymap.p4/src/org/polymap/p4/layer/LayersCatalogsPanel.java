@@ -188,6 +188,7 @@ public class LayersCatalogsPanel
                     viewer.collapseAll();
                 });
                 
+                Thread.sleep( 2000 );  // let the child panel open up
                 for (int i=0; i<treePath.getSegmentCount()-1; i++) {
                     Object segment = treePath.getSegment( i );
                     UIThreadExecutor.async( () -> {

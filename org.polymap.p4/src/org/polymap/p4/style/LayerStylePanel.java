@@ -71,7 +71,6 @@ import org.polymap.core.ui.StatusDispatcher;
 import org.polymap.core.ui.UIUtils;
 
 import org.polymap.rhei.batik.Context;
-import org.polymap.rhei.batik.IPanel;
 import org.polymap.rhei.batik.Mandatory;
 import org.polymap.rhei.batik.PanelIdentifier;
 import org.polymap.rhei.batik.Scope;
@@ -89,7 +88,6 @@ import org.polymap.model2.Property;
 import org.polymap.model2.runtime.PropertyInfo;
 import org.polymap.p4.P4Panel;
 import org.polymap.p4.P4Plugin;
-import org.polymap.p4.layer.LayerInfoPanel;
 
 /**
  * 
@@ -125,17 +123,17 @@ public class LayerStylePanel
     private List<StylePropertyField>    fields = Lists.newArrayList();
     
 
-    @Override
-    public boolean beforeInit() {
-        IPanel parent = getContext().getPanel( getSite().getPath().removeLast( 1 ) );
-        if (parent instanceof LayerInfoPanel) {
-            site().title.set( "" );
-            site().tooltip.set( "Edit styling" );
-            site().icon.set( P4Plugin.images().svgImage( "palette.svg", P4Plugin.HEADER_ICON_CONFIG ) );
-            return true;
-        }
-        return false;
-    }
+//    @Override
+//    public boolean beforeInit() {
+//        IPanel parent = getContext().getPanel( getSite().getPath().removeLast( 1 ) );
+//        if (parent instanceof LayerInfoPanel) {
+//            site().title.set( "" );
+//            site().tooltip.set( "Edit styling" );
+//            site().icon.set( P4Plugin.images().svgImage( "palette.svg", P4Plugin.HEADER_ICON_CONFIG ) );
+//            return true;
+//        }
+//        return false;
+//    }
 
 
     @Override
@@ -170,7 +168,7 @@ public class LayerStylePanel
         list.setContentProvider( new FeatureStyleContentProvider() );
         list.iconProvider.set( new FeatureStyleLabelProvider( tk() ) );
         list.firstLineLabelProvider.set( new FeatureStyleLabelProvider( tk() ) );
-        list.secondLineLabelProvider.set( new FeatureStyleDescriptionProvider( tk() ) );
+        //list.secondLineLabelProvider.set( new FeatureStyleDescriptionProvider( tk() ) );
         list.secondSecondaryActionProvider.set( new ActiveActionProvider() );
         list.firstSecondaryActionProvider.set( new RemoveActionProvider() );
         list.setComparer( new StyleIdentityComparer() );
@@ -221,10 +219,10 @@ public class LayerStylePanel
                 ev -> ev.getSource() == featureStyle ) );
         
         // layout
-        parent.setLayout( FormLayoutFactory.defaults().margins( 0, 8 ).spacing( 8 ).create() );
+        parent.setLayout( FormLayoutFactory.defaults().margins( 0, 0 ).spacing( 0 ).create() );
         on( toolbar.getControl() ).left( 0, 3 ).right( 100, -3 ).top( 0 );
-        on( list.getControl() ).fill().top( toolbar.getControl() ).bottom( 23 );
-        on( editorSection.getControl() ).fill().top( list.getControl() );
+        on( list.getControl() ).fill().top( toolbar.getControl() ).bottom( toolbar.getControl(), 150 );
+        on( editorSection.getControl() ).fill().top( list.getControl(), 8 );
     }
     
     

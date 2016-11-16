@@ -56,7 +56,7 @@ public class LayerStyleContrib
     protected Context<StyleEditorInput>     styleEditorInput;
 
     @Scope( P4Plugin.Scope )
-    protected Context<FeatureLayer>     featureLayer;
+    protected Context<FeatureLayer>         featureLayer;
     
     @Override
     public void fillToolbar( IContributionSite site, MdToolbar2 toolbar ) {

@@ -142,7 +142,7 @@ public class MetadataInfoPanel
             SelectionAdapter.on( ev.getSelection() ).forEach( elm -> {
                 if (elm instanceof IResourceInfo) {
                     selectedResource.set( (IResourceInfo)elm );
-                    getContext().openPanel( site().path(), ResourceInfoPanel.ID );                        
+                    getContext().openPanel( MetadataInfoPanel.this.site().path(), ResourceInfoPanel.ID );                        
                 }
                 else {
                     viewer.toggleItemExpand( elm );

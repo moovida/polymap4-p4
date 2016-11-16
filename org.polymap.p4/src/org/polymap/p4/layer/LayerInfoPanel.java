@@ -16,8 +16,6 @@ package org.polymap.p4.layer;
 
 import static org.polymap.core.runtime.UIThreadExecutor.asyncFast;
 import static org.polymap.core.runtime.event.TypeEventFilter.ifType;
-import static org.polymap.rhei.batik.app.SvgImageRegistryHelper.COLOR_DANGER;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -26,6 +24,8 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+
+import org.eclipse.ui.forms.events.ExpansionEvent;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 
@@ -58,6 +58,7 @@ import org.polymap.rhei.batik.toolkit.Snackbar.Appearance;
 import org.polymap.p4.P4Panel;
 import org.polymap.p4.P4Plugin;
 import org.polymap.p4.project.ProjectRepository;
+import org.polymap.p4.style.LayerStyleDashlet;
 
 /**
  * 
@@ -94,11 +95,14 @@ public class LayerInfoPanel
         ContributionManager.instance().contributeTo( this, this );
 
         // dashboard
-        dashboard = new Dashboard( getSite(), DASHBOARD_ID );
+        dashboard = new Dashboard( getSite(), DASHBOARD_ID ).defaultExpandable.put( true );
         dashboard.addDashlet( new LayerInfoDashlet( layer.get() )
                 .addConstraint( new PriorityConstraint( 100 ) ) );
+        dashboard.addDashlet( new LayerStyleDashlet( site() )
+                .addConstraint( new PriorityConstraint( 10 ) ).setExpanded( false ) );
         dashboard.addDashlet( new DeleteLayerDashlet()
-                .addConstraint( new PriorityConstraint( 0 ) ) );
+                .addConstraint( new PriorityConstraint( 0 ) ).setExpanded( false ) );
+        
 //        try {
 //            NullProgressMonitor monitor = new NullProgressMonitor();
 //            P4Plugin.allResolver().metadata( layer.get(), monitor ).ifPresent( serviceInfo -> {
@@ -114,7 +118,8 @@ public class LayerInfoPanel
 //            log.warn( "", e );
 //        }
         dashboard.createContents( parent );
-
+        EventManager.instance().subscribe( this, ifType( ExpansionEvent.class, ev -> true ) );
+        
         // fab
         fab = tk().createFab();
         fab.setToolTipText( "Submit changes" );
@@ -160,6 +165,18 @@ public class LayerInfoPanel
     }
     
     
+    @EventHandler( display=true )
+    protected void dashletExpanded( ExpansionEvent ev ) {
+        if (ev.getState()) {
+            for (IDashlet dashlet : dashboard.dashlets()) {
+                if (dashlet.site().isExpanded() && dashlet.site().getPanelSection() != ev.getSource()) {
+                    dashlet.site().setExpanded( false );
+                }
+            }
+        }
+    }
+    
+    
     /**
      * 
      */
@@ -171,12 +188,12 @@ public class LayerInfoPanel
             super.init( site );
             site.title.set( "Danger zone" );
             site.constraints.get().add( new MinWidthConstraint( 350, 1 ) );
-            site.border.set( false );
+            site.border.set( true );
         }
 
         @Override
         public void createContents( Composite parent ) {
-            getSite().getTitleControl().setForeground( UIUtils.getColor( COLOR_DANGER ) );
+            getSite().getTitleControl().setForeground( UIUtils.getColor( SvgImageRegistryHelper.COLOR_DANGER ) );
             
             Button deleteBtn = tk().createButton( parent, "Delete this layer", SWT.PUSH, SWT.FLAT );
             //deleteBtn.setForeground( UIUtils.getColor( COLOR_DANGER ) );
@@ -184,7 +201,7 @@ public class LayerInfoPanel
             deleteBtn.setToolTipText( "Delete this layer and all its settings.<br/>Data is kept in catalog." );
             deleteBtn.addSelectionListener( new SelectionAdapter() {
                 @Override
-                public void widgetSelected( SelectionEvent e ) {
+                public void widgetSelected( SelectionEvent ev ) {
 //                    MdSnackbar snackbar = tk.createSnackbar();
 //                    snackbar.showIssue( MessageType.WARNING, "We are going to delete the project." );
                     
@@ -194,7 +211,7 @@ public class LayerInfoPanel
 
                     OperationSupport.instance().execute2( op, true, false, ev2 -> asyncFast( () -> {
                         if (ev2.getResult().isOK()) {
-                            BatikApplication.instance().getContext().closePanel( site().path() );
+                            BatikApplication.instance().getContext().closePanel( LayerInfoPanel.this.site().path() );
 
 //                            // close panel and parent, assuming that projct map is root
 //                            getContext().openPanel( PanelPath.ROOT, new PanelIdentifier( "start" ) );
