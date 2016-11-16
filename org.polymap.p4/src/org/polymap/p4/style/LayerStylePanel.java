@@ -330,9 +330,8 @@ public class LayerStylePanel
     /**
      * 
      */
-    class ActiveActionProvider
+    protected class ActiveActionProvider
             extends CheckboxActionProvider {
-
         
         public ActiveActionProvider() {
             super( P4Plugin.images().svgImage( "eye.svg", P4Plugin.TOOLBAR_ICON_CONFIG ), P4Plugin.images().svgImage( "eye-off.svg", P4Plugin.TOOLBAR_ICON_CONFIG ) );
@@ -342,7 +341,6 @@ public class LayerStylePanel
         protected boolean initSelection( MdListViewer viewer, Object elm ) {
             return ((Style)elm).active.get();
         }
-
 
         @Override
         protected void onSelectionChange( MdListViewer viewer, Object elm ) {
@@ -354,7 +352,7 @@ public class LayerStylePanel
     /**
      * 
      */
-    class RemoveActionProvider
+    protected class RemoveActionProvider
             extends ActionProvider {
 
         @Override
@@ -364,7 +362,6 @@ public class LayerStylePanel
             list.remove( elm );
             //list.getTree().layout( true );            
         }
-
 
         @Override
         public void update( ViewerCell cell ) {
@@ -376,7 +373,7 @@ public class LayerStylePanel
     /**
      * 
      */
-    class AddPointItem
+    protected class AddPointItem
             extends ActionItem {
 
         public AddPointItem( ItemContainer container ) {
@@ -394,7 +391,7 @@ public class LayerStylePanel
     /**
      * 
      */
-    class AddPolygonItem
+    protected class AddPolygonItem
             extends ActionItem {
 
         public AddPolygonItem( ItemContainer container ) {
@@ -409,7 +406,10 @@ public class LayerStylePanel
     }
 
 
-    class AddLineItem
+    /**
+     * 
+     */
+    protected class AddLineItem
             extends ActionItem {
 
         public AddLineItem( ItemContainer container ) {
@@ -427,7 +427,7 @@ public class LayerStylePanel
     /**
      * 
      */
-    class AddTextItem
+    protected class AddTextItem
             extends ActionItem {
 
         public AddTextItem( ItemContainer container ) {
@@ -453,7 +453,6 @@ public class LayerStylePanel
         public int hashCode( Object elm ) {
             return elm.hashCode();
         }
-
 
         @Override
         public boolean equals( Object a, Object b ) {
