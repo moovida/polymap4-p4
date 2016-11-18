@@ -36,13 +36,13 @@ import org.polymap.core.ui.FormLayoutFactory;
 import org.polymap.core.ui.SelectionAdapter;
 import org.polymap.core.ui.StatusDispatcher;
 
-import org.polymap.rhei.batik.BatikApplication;
 import org.polymap.rhei.batik.Context;
 import org.polymap.rhei.batik.PanelIdentifier;
 import org.polymap.rhei.batik.Scope;
 import org.polymap.rhei.batik.app.SvgImageRegistryHelper;
 import org.polymap.rhei.batik.toolkit.ActionText;
 import org.polymap.rhei.batik.toolkit.ClearTextAction;
+import org.polymap.rhei.batik.toolkit.Snackbar.Appearance;
 import org.polymap.rhei.batik.toolkit.TextActionItem;
 import org.polymap.rhei.batik.toolkit.TextActionItem.Type;
 import org.polymap.rhei.batik.toolkit.md.ActionProvider;
@@ -182,7 +182,8 @@ public class CatalogPanel
             IResourceInfo res = (IResourceInfo)elm;
             NewLayerContribution.createLayer( res, map.get(), ev -> {
                 if (ev.getResult().isOK()) {
-                    BatikApplication.instance().getContext().closePanel( site().path() );
+                    //BatikApplication.instance().getContext().closePanel( site().path() );
+                    tk().createSnackbar( Appearance.FadeIn, "Layer has been created" );
                 }
                 else {
                     StatusDispatcher.handleError( "Unable to create new layer.", ev.getResult().getException() );

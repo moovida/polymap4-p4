@@ -39,14 +39,13 @@ import org.polymap.core.style.DefaultStyle;
 import org.polymap.core.style.model.FeatureStyle;
 import org.polymap.core.ui.StatusDispatcher;
 
-import org.polymap.rhei.batik.BatikApplication;
 import org.polymap.rhei.batik.Context;
 import org.polymap.rhei.batik.IPanel;
 import org.polymap.rhei.batik.Mandatory;
-import org.polymap.rhei.batik.PanelPath;
 import org.polymap.rhei.batik.Scope;
 import org.polymap.rhei.batik.contribution.IContributionSite;
 import org.polymap.rhei.batik.contribution.IFabContribution;
+import org.polymap.rhei.batik.toolkit.Snackbar;
 import org.polymap.rhei.batik.toolkit.md.MdToolkit;
 
 import org.polymap.p4.P4Plugin;
@@ -90,8 +89,10 @@ public class NewLayerContribution
     protected void execute( IContributionSite site ) {
         createLayer( res.get(), map.get(), ev -> {
             if (ev.getResult().isOK()) {
-                PanelPath parentPath = site.panelSite().path().removeLast( 1 );
-                BatikApplication.instance().getContext().closePanel( parentPath );
+//                PanelPath parentPath = site.panelSite().path().removeLast( 1 );
+//                BatikApplication.instance().getContext().closePanel( parentPath );
+                
+                ((MdToolkit)site.toolkit()).createSnackbar( Snackbar.Appearance.FadeIn, "Layer has been created" );
             }
             else {
                 StatusDispatcher.handleError( "Unable to create new layer.", ev.getResult().getException() );

@@ -23,8 +23,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.beans.PropertyChangeEvent;
-
 import org.opengis.feature.simple.SimpleFeatureType;
 
 import org.apache.commons.logging.Log;
@@ -48,10 +46,12 @@ import org.polymap.core.operation.DefaultOperation;
 import org.polymap.core.operation.OperationSupport;
 import org.polymap.core.project.ILayer;
 import org.polymap.core.project.IMap;
+import org.polymap.core.project.ProjectNode.ProjectNodeCommittedEvent;
 import org.polymap.core.project.ops.TwoPhaseCommitOperation;
 import org.polymap.core.project.ui.ProjectNodeContentProvider;
 import org.polymap.core.project.ui.ProjectNodeLabelProvider;
 import org.polymap.core.runtime.UIThreadExecutor;
+import org.polymap.core.runtime.event.Event;
 import org.polymap.core.runtime.event.EventHandler;
 import org.polymap.core.runtime.event.EventManager;
 import org.polymap.core.runtime.i18n.IMessages;
@@ -119,8 +119,8 @@ public class LayersPanel
 
     @Override
     public void dispose() {
-        EventManager.instance().unsubscribe( this );
         super.dispose();
+        EventManager.instance().unsubscribe( this );
     }
 
 
@@ -159,17 +159,17 @@ public class LayersPanel
         
         viewer.setInput( map.get() );
 
-        // avoid empty rows and lines
+        // noBottom: avoid empty rows and lines
         viewer.getTree().setLayoutData( FormDataFactory.filled()/*.noBottom()*/.create() );
         
         // listen to ILayer changes
-        EventManager.instance().subscribe( this, ifType( PropertyChangeEvent.class, 
-                ev -> ev.getSource() instanceof ILayer && map.get().containsLayer( (ILayer)ev.getSource() ) ) );
+        EventManager.instance().subscribe( this, ifType( ProjectNodeCommittedEvent.class, ev -> 
+                ev.getSource() instanceof ILayer ) );
     }
 
     
-    @EventHandler( display=true, delay=10 )
-    protected void layerChanged( List<PropertyChangeEvent> evs ) {
+    @EventHandler( display=true, delay=100, scope=Event.Scope.JVM )
+    protected void projectChanged( List<ProjectNodeCommittedEvent> evs ) {
         if (viewer == null || viewer.getControl().isDisposed()) {
             EventManager.instance().unsubscribe( LayersPanel.this );            
         }
