@@ -32,7 +32,6 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.polymap.core.operation.OperationSupport;
 import org.polymap.core.project.ILayer;
 import org.polymap.core.project.ops.DeleteLayerOperation;
-import org.polymap.core.project.ops.UpdateLayerOperation;
 import org.polymap.core.runtime.event.EventHandler;
 import org.polymap.core.runtime.event.EventManager;
 import org.polymap.core.ui.StatusDispatcher;
@@ -49,7 +48,6 @@ import org.polymap.rhei.batik.dashboard.Dashboard;
 import org.polymap.rhei.batik.dashboard.DashletSite;
 import org.polymap.rhei.batik.dashboard.DefaultDashlet;
 import org.polymap.rhei.batik.dashboard.IDashlet;
-import org.polymap.rhei.batik.dashboard.ISubmitableDashlet;
 import org.polymap.rhei.batik.dashboard.SubmitStatusChangeEvent;
 import org.polymap.rhei.batik.toolkit.MinWidthConstraint;
 import org.polymap.rhei.batik.toolkit.PriorityConstraint;
@@ -128,21 +126,8 @@ public class LayerInfoPanel
             @Override
             public void widgetSelected( SelectionEvent ev ) {
                 try {
-                    for (IDashlet dashlet : dashboard.dashlets()) {
-                        if (dashlet instanceof ISubmitableDashlet) {
-                            ((ISubmitableDashlet)dashlet).submit( new NullProgressMonitor() );
-                        }
-                    }
-                    UpdateLayerOperation op = new UpdateLayerOperation()
-                            .uow.put( layer.get().belongsTo() )
-                            .layer.put( layer.get() );
-                    
-                    // XXX not async until op progress indicator is inplace
-                    OperationSupport.instance().execute2( op, false, false, ev2 -> asyncFast( () -> {
-                        if (ev2.getResult().isOK()) {
-                            tk().createSnackbar( Appearance.FadeIn, "Saved" );
-                        }
-                    }));
+                    dashboard.submit( new NullProgressMonitor() );
+                    tk().createSnackbar( Appearance.FadeIn, "Saved" );
                 }
                 catch (Exception e) {
                     StatusDispatcher.handleError( "Unable to submit all changes.", e );
@@ -158,9 +143,9 @@ public class LayerInfoPanel
     
     @EventHandler( display=true )
     protected void submitStatusChanged( SubmitStatusChangeEvent ev ) {
-        fab.setVisible( true );
         if (fab != null && !fab.isDisposed()) {
-            fab.setEnabled( ev.getsSubmitable() );
+            fab.setVisible( fab.isVisible() || dashboard.isDirty() );
+            fab.setEnabled( dashboard.isDirty() && dashboard.isValid() );
         }
     }
     

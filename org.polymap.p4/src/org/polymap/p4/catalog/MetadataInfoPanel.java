@@ -88,7 +88,7 @@ public class MetadataInfoPanel
 
     @Override
     public void createContents( Composite parent ) {
-        site().title.set( md.get().getTitle() );
+        site().title.set( "Data source" );  //md.get().getTitle() );
         site().setSize( SIDE_PANEL_WIDTH, SIDE_PANEL_WIDTH, SIDE_PANEL_WIDTH2 );
         ContributionManager.instance().contributeTo( this, this );
         

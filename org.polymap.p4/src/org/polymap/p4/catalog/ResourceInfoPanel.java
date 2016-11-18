@@ -98,13 +98,15 @@ public class ResourceInfoPanel
     
     @Override
     public void createContents( Composite parent ) {
-        site().title.set( res.get().getTitle() );
+        site().title.set( "Data set" ); //res.get().getTitle() );
         site().setSize( SIDE_PANEL_WIDTH, SIDE_PANEL_WIDTH, SIDE_PANEL_WIDTH2 );
         ContributionManager.instance().contributeTo( this, this );
         
         dashboard = new Dashboard( getSite(), DASHBOARD_ID );
-        dashboard.addDashlet( new ResourceInfoDashlet( res.get() ).addConstraint( new PriorityConstraint( 100 ) ) );
-        dashboard.addDashlet( new PreviewMapDashlet( res.get() ) );
+        dashboard.addDashlet( new ResourceInfoDashlet( res.get() )
+                .addConstraint( new PriorityConstraint( 100 ) ) );
+        dashboard.addDashlet( new PreviewMapDashlet( res.get() )
+                .addConstraint( new PriorityConstraint( 0 ) ) );
         //dashboard.addDashlet( new PreviewFeaturesDashlet() );
         dashboard.createContents( parent );
         ContributionManager.instance().contributeTo( dashboard, this );

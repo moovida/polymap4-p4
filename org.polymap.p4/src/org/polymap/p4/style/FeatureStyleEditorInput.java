@@ -16,11 +16,11 @@ import org.geotools.data.FeatureStore;
 import org.opengis.feature.type.FeatureType;
 
 /**
- * Container to transport relevant data to the style panel.
+ * Container to transport relevant data to the {@link FeatureStyleEditor}.
  * 
  * @author Steffen Stundzig
  */
-public class StyleEditorInput {
+public class FeatureStyleEditorInput {
 
     private final String       styleIdentifier;
 
@@ -29,14 +29,14 @@ public class StyleEditorInput {
     private final FeatureStore featureStore;
 
 
-    public StyleEditorInput( final String styleIdentifier, final FeatureStore featureStore ) {
+    public FeatureStyleEditorInput( final String styleIdentifier, final FeatureStore featureStore ) {
         this.styleIdentifier = styleIdentifier;
         this.featureType = featureStore.getSchema();
         this.featureStore = featureStore;
     }
 
 
-    public StyleEditorInput( final String styleIdentifier, final FeatureType featureType ) {
+    public FeatureStyleEditorInput( final String styleIdentifier, final FeatureType featureType ) {
         this.styleIdentifier = styleIdentifier;
         this.featureType = featureType;
         this.featureStore = null;

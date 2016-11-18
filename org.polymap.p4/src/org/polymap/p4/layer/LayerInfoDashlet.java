@@ -21,7 +21,9 @@ import org.eclipse.ui.forms.widgets.ColumnLayoutData;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 
+import org.polymap.core.operation.OperationSupport;
 import org.polymap.core.project.ILayer;
+import org.polymap.core.project.ops.UpdateLayerOperation;
 import org.polymap.core.ui.ColumnDataFactory;
 import org.polymap.core.ui.ColumnLayoutFactory;
 
@@ -74,7 +76,20 @@ public class LayerInfoDashlet
     
     @Override
     public boolean submit( IProgressMonitor monitor ) throws Exception {
+        assert site().isDirty() && site().isValid();
         form.submit( monitor );
+        
+        UpdateLayerOperation op = new UpdateLayerOperation()
+                .uow.put( layer.belongsTo() )
+                .layer.put( layer );
+        
+        // XXX not async until op progress indicator is inplace
+        OperationSupport.instance().execute2( op, false, false ); //, ev2 -> UIThreadExecutor.asyncFast( () -> {
+//            if (ev2.getResult().isOK()) {
+//                tk().createSnackbar( Appearance.FadeIn, "Saved" );
+//            }
+//        }));
+
         return true;
     }
 
@@ -131,7 +146,9 @@ public class LayerInfoDashlet
         @Override
         public void fieldChange( FormFieldEvent ev ) {
             if (ev.getEventCode() == VALUE_CHANGE) {
-                getSite().enableSubmit( form.isValid() && form.isDirty() );
+                if (form.isDirty()) {
+                    site().enableSubmit( form.isDirty(), form.isValid() );
+                }
                 
                 if (ev.getFieldName().equals( layer.label.info().getName() )) {
                     getSite().title.set( (String)ev.getNewModelValue().orElse( "???" ) );

@@ -20,18 +20,19 @@ import org.apache.commons.logging.LogFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 
+import org.eclipse.core.runtime.IProgressMonitor;
+
 import org.polymap.core.project.ILayer;
 import org.polymap.core.runtime.UIThreadExecutor;
 import org.polymap.core.ui.FormDataFactory;
 import org.polymap.core.ui.FormLayoutFactory;
 
-import org.polymap.rhei.batik.BatikApplication;
 import org.polymap.rhei.batik.Context;
-import org.polymap.rhei.batik.IAppContext;
 import org.polymap.rhei.batik.PanelSite;
 import org.polymap.rhei.batik.Scope;
 import org.polymap.rhei.batik.dashboard.DashletSite;
 import org.polymap.rhei.batik.dashboard.DefaultDashlet;
+import org.polymap.rhei.batik.dashboard.ISubmitableDashlet;
 import org.polymap.rhei.batik.toolkit.md.MdToolkit;
 
 import org.polymap.p4.P4Plugin;
@@ -43,22 +44,19 @@ import org.polymap.p4.layer.FeatureLayer;
  * @author Falko Bräutigam
  */
 public class LayerStyleDashlet
-        extends DefaultDashlet {
+        extends DefaultDashlet
+        implements ISubmitableDashlet {
 
     private static final Log log = LogFactory.getLog( LayerStyleDashlet.class );
     
-    private PanelSite                   panelSite;
-    
-    private LayerStylePanel             panel;
-
     /** Inbound: */
     @Scope( P4Plugin.Scope )
     private Context<ILayer>             layer;
     
-    /** Outbound: */
-    @Scope( P4Plugin.StyleScope )
-    private Context<StyleEditorInput>   styleEditorInput;
-
+    private PanelSite                   panelSite;
+    
+    private FeatureStyleEditor          editor;
+    
     
     public LayerStyleDashlet( PanelSite panelSite ) {
         this.panelSite = panelSite;
@@ -74,22 +72,41 @@ public class LayerStyleDashlet
 
 
     @Override
+    public void dispose() {
+        if (editor != null) {
+            editor.dispose();
+            editor = null;
+        }
+    }
+
+
+    @Override
+    public boolean submit( IProgressMonitor monitor ) throws Exception {
+        assert site().isDirty() && site().isValid();
+        editor.store();
+        return true;
+    }
+
+
+    @Override
     public void createContents( Composite parent ) {
-        panel = new LayerStylePanel();
-        IAppContext context = BatikApplication.instance().getContext();
-        context.propagate( panel );
-        MdToolkit tk = (MdToolkit)getSite().toolkit();
-        
+        MdToolkit tk = (MdToolkit)getSite().toolkit();                    
+
         FeatureLayer.of( layer.get() ).thenAccept( fl -> {
             UIThreadExecutor.async( () -> {
                 if (fl.isPresent()) {
                     try {
-                        styleEditorInput.set( new StyleEditorInput( 
+                        FeatureStyleEditorInput editorInput = new FeatureStyleEditorInput( 
                                 layer.get().styleIdentifier.get(), 
-                                fl.get().featureSource() ) );
-                        panel.setSite( panelSite, context );  // ???
-                        panel.init();
-                        panel.createContents( parent );
+                                fl.get().featureSource() );
+                        
+                        editor = new FeatureStyleEditor( editorInput ) {
+                            @Override
+                            protected void enableSubmit( boolean enabled ) {
+                                site().enableSubmit( enabled, enabled );
+                            }
+                        };
+                        editor.createContents( parent, tk );
                     }
                     catch (Exception e) {
                         log.warn( "", e );

@@ -53,10 +53,11 @@ public class LayerStyleContrib
     private Optional<LayerStylePanel>       childPanel = Optional.empty();
 
     @Scope( P4Plugin.StyleScope )
-    protected Context<StyleEditorInput>     styleEditorInput;
+    protected Context<FeatureStyleEditorInput> editorInput;
 
     @Scope( P4Plugin.Scope )
     protected Context<FeatureLayer>         featureLayer;
+    
     
     @Override
     public void fillToolbar( IContributionSite site, MdToolbar2 toolbar ) {
@@ -66,7 +67,7 @@ public class LayerStyleContrib
             
             featureLayer.ifPresent( fs -> {
                 try {
-                    styleEditorInput.set( new StyleEditorInput( fs.layer().styleIdentifier.get(), fs.featureSource() ) );
+                    editorInput.set( new FeatureStyleEditorInput( fs.layer().styleIdentifier.get(), fs.featureSource() ) );
                     item = new ActionItem( toolbar );
                     item.text.set( "" );
                     item.icon.set( P4Plugin.images().svgImage("palette.svg", P4Plugin.TOOLBAR_ICON_CONFIG ) );
