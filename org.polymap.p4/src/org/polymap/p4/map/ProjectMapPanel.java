@@ -145,7 +145,7 @@ public class ProjectMapPanel
     public void createContents( Composite parent ) {
         // title and layout
         site().title.set( P4AppDesign.appTitle );
-        site().setSize( 250, Integer.MAX_VALUE, Integer.MAX_VALUE );
+        site().setSize( SIDE_PANEL_WIDTH/2, Integer.MAX_VALUE, Integer.MAX_VALUE );
         
         //parent.setBackground( UIUtils.getColor( 0xff, 0xff, 0xff ) );
         parent.setLayout( FormLayoutFactory.defaults().margins( 0, 0, 5, 0 ).spacing( 0 ).create() );

@@ -88,7 +88,7 @@ public class LayerInfoPanel
 
     @Override
     public void createContents( Composite parent ) {
-        site().setSize( SIDE_PANEL_WIDTH, SIDE_PANEL_WIDTH, SIDE_PANEL_WIDTH2 );
+        site().setSize( SIDE_PANEL_WIDTH/2, SIDE_PANEL_WIDTH, SIDE_PANEL_WIDTH2 );
         site().title.set( "Layer" ); // + layer.get().label.get() );
         ContributionManager.instance().contributeTo( this, this );
 
@@ -116,7 +116,8 @@ public class LayerInfoPanel
 //            log.warn( "", e );
 //        }
         dashboard.createContents( parent );
-        EventManager.instance().subscribe( this, ifType( ExpansionEvent.class, ev -> true ) );
+        EventManager.instance().subscribe( this, ifType( ExpansionEvent.class, ev -> 
+                dashboard.dashlets().stream().anyMatch( d -> d.site().getPanelSection() == ev.getSource() ) ) );
         
         // fab
         fab = tk().createFab();
@@ -151,7 +152,7 @@ public class LayerInfoPanel
     
     
     @EventHandler( display=true )
-    protected void dashletExpanded( ExpansionEvent ev ) {
+    protected void onDashletExpansion( ExpansionEvent ev ) {
         if (ev.getState()) {
             for (IDashlet dashlet : dashboard.dashlets()) {
                 if (dashlet.site().isExpanded() && dashlet.site().getPanelSection() != ev.getSource()) {
