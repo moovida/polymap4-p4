@@ -192,10 +192,10 @@ public class LayersCatalogsPanel
                 for (int i=0; i<treePath.getSegmentCount()-1; i++) {
                     Object segment = treePath.getSegment( i );
                     UIThreadExecutor.async( () -> {
-                        log.info( "expanding: " + segment.getClass().getSimpleName() );
+                        log.debug( "expanding: " + segment.getClass().getSimpleName() );
                         viewer.expandToLevel( segment, 1 );
                     });
-                    log.info( "waiting for: " + segment.getClass().getSimpleName() );
+                    log.debug( "waiting for: " + segment.getClass().getSimpleName() );
                     Thread.sleep( 1000 );  // FIXME
 //                    while (sync( () -> viewer.getExpandedState( segment ) ).get() == false) {
 //                        log.info( "waiting for: " + segment.getClass().getSimpleName() );
