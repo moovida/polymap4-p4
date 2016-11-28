@@ -258,7 +258,7 @@ public class ImportPanel
         if (context.site().ok.get()) {
             MdToolkit tk = (MdToolkit)site().toolkit();
             if (context.site().terminal.get()) {
-                fab = tk.createFab( ImporterPlugin.images().svgImage( "check.svg", WHITE24 ), SWT.RIGHT );
+                fab = tk.createFab( SWT.RIGHT );
                 fab.setToolTipText( "Import data" );
             }
             else {

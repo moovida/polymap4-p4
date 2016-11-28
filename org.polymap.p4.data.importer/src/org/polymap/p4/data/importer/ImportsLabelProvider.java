@@ -111,7 +111,7 @@ class ImportsLabelProvider
                 case Icon:          cell.setImage( null /*P4Plugin.images().svgImage( "help.svg", SvgImageRegistryHelper.NORMAL12 )*/ ); break;
                 case StatusIcon: {
                     if (prompt.ok.get()) {
-                        cell.setImage( ImporterPlugin.images().svgImage( "check.svg", OK24 ) );
+                        cell.setImage( BatikPlugin.images().svgImage( "check.svg", OK24 ) );
                     }
 //                    else if (prompt.severity.get() == Severity.INFO ) {
 //                        cell.setImage( null );
