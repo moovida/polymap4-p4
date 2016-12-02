@@ -50,7 +50,6 @@ import org.polymap.rhei.batik.toolkit.BatikDialogStatusAdapter;
 
 import org.polymap.p4.catalog.LocalCatalog;
 import org.polymap.p4.catalog.AllResolver;
-import org.polymap.p4.layer.FeatureSelectionTableContrib;
 import org.polymap.p4.layer.NewLayerContribution;
 import org.polymap.p4.style.LayerStyleContrib;
 import org.polymap.p4.style.P4UIService;
@@ -153,10 +152,6 @@ public class P4Plugin
         ContributionManager.registerExtension( new ContributionProviderExtension() {
             @Override
             public IContributionProvider createProvider() { return new NewLayerContribution(); }
-        });
-        ContributionManager.registerExtension( new ContributionProviderExtension() {
-            @Override
-            public IContributionProvider createProvider() { return new FeatureSelectionTableContrib(); }
         });
         ContributionManager.registerExtension( new ContributionProviderExtension() {
             @Override

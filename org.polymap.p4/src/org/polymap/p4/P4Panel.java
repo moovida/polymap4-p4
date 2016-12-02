@@ -27,9 +27,9 @@ import org.polymap.rhei.batik.DefaultPanel;
 import org.polymap.rhei.batik.Scope;
 import org.polymap.rhei.batik.toolkit.md.MdToolkit;
 
-import org.polymap.p4.layer.FeaturePanel;
 import org.polymap.p4.layer.FeatureLayer;
-import org.polymap.p4.layer.FeatureSelectionTableContrib;
+import org.polymap.p4.layer.FeaturePanel;
+import org.polymap.p4.layer.LayersPanel;
 
 /**
  * 
@@ -55,8 +55,8 @@ public abstract class P4Panel
     
     /**
      * The <b>active</b> layer and the <b>selected</b> features from this layer.
-     * There is just one active layer at a given time. This layer is selected by
-     * choosing the feature table to open ({@link FeatureSelectionTableContrib}).
+     * There is just one active layer at a given time. This layer is mainly
+     * controlled by {@link LayersPanel.LayerActiveAction}.
      */
     @Scope( P4Plugin.Scope )
     protected Context<FeatureLayer>         featureLayer;
