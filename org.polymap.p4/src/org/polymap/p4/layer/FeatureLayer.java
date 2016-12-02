@@ -161,6 +161,21 @@ public class FeatureLayer {
     }
 
 
+    @Override
+    public boolean equals( Object obj ) {
+        if (this == obj) {
+            return true;
+        }
+        else if (obj instanceof FeatureLayer) {
+            FeatureLayer rhs = (FeatureLayer)obj;
+            return layer.id().equals( rhs.layer.id() );
+        }
+        else {
+            return false;
+        }
+    }
+
+
     public boolean isValid() {
         return fs != null;
     }

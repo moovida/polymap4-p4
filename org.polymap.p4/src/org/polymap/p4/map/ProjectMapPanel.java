@@ -14,7 +14,7 @@
  */
 package org.polymap.p4.map;
 
-import static org.polymap.core.runtime.event.TypeEventFilter.ifType;
+import static org.polymap.core.runtime.event.TypeEventFilter.isType;
 import static org.polymap.core.ui.FormDataFactory.on;
 import static org.polymap.p4.layer.FeatureLayer.ff;
 
@@ -46,6 +46,7 @@ import org.polymap.core.mapeditor.MapViewer;
 import org.polymap.core.project.ILayer;
 import org.polymap.core.project.IMap;
 import org.polymap.core.project.ProjectNode.ProjectNodeCommittedEvent;
+import org.polymap.core.runtime.UIThreadExecutor;
 import org.polymap.core.runtime.event.EventHandler;
 import org.polymap.core.runtime.event.EventManager;
 import org.polymap.core.runtime.i18n.IMessages;
@@ -56,16 +57,15 @@ import org.polymap.core.ui.UIUtils;
 
 import org.polymap.rhei.batik.Context;
 import org.polymap.rhei.batik.PanelIdentifier;
+import org.polymap.rhei.batik.PropertyAccessEvent;
 import org.polymap.rhei.batik.Scope;
 import org.polymap.rhei.batik.contribution.ContributionManager;
 import org.polymap.rhei.batik.toolkit.Snackbar.Appearance;
-import org.polymap.rhei.batik.toolkit.md.MdToolbar2;
-import org.polymap.rhei.batik.toolkit.md.MdToolkit;
-
 import org.polymap.p4.Messages;
 import org.polymap.p4.P4AppDesign;
 import org.polymap.p4.P4Panel;
 import org.polymap.p4.P4Plugin;
+import org.polymap.p4.layer.FeatureSelectionTable;
 import org.polymap.p4.project.ProjectRepository;
 import org.polymap.rap.openlayers.base.OlEvent;
 import org.polymap.rap.openlayers.base.OlEventListener;
@@ -80,7 +80,7 @@ import org.polymap.rap.openlayers.control.ScaleLineControl;
  * @author <a href="http://www.polymap.de">Falko Bräutigam</a>
  */
 public class ProjectMapPanel
-        extends P4Panel 
+        extends P4Panel
         implements OlEventListener {
 
     private static Log log = LogFactory.getLog( ProjectMapPanel.class );
@@ -118,8 +118,11 @@ public class ProjectMapPanel
             }
         }
         
+        //
+        featureLayer.addListener( this, ev -> ev.getType() == PropertyAccessEvent.TYPE.SET );
+        
         // listen to maxExtent changes
-        EventManager.instance().subscribe( this, ifType( ProjectNodeCommittedEvent.class, ev -> 
+        EventManager.instance().subscribe( this, isType( ProjectNodeCommittedEvent.class, ev -> 
                 ev.getEntityId().equals( map.get().id() ) ) );
     }
 
@@ -127,6 +130,17 @@ public class ProjectMapPanel
     @Override
     public void dispose() {
         EventManager.instance().unsubscribe( this );
+    }
+
+    
+    @EventHandler( display=true )
+    protected void onFeatureLayerSet( PropertyAccessEvent ev ) {
+        if (featureLayer.isPresent()) {
+            createTableView();
+        }
+        else {
+            closeButtomView();
+        }
     }
 
     
@@ -150,15 +164,15 @@ public class ProjectMapPanel
         //parent.setBackground( UIUtils.getColor( 0xff, 0xff, 0xff ) );
         parent.setLayout( FormLayoutFactory.defaults().margins( 0, 0, 5, 0 ).spacing( 0 ).create() );
         
-        // buttom toolbar
-        MdToolbar2 tb = ((MdToolkit)site().toolkit()).createToolbar( parent, SWT.FLAT );
-        on( tb.getControl() ).fill().noTop();
-        tb.getControl().moveAbove( null );
-        ContributionManager.instance().contributeTo( tb, this, BOTTOM_TOOLBAR_TAG );
+//        // buttom toolbar
+//        MdToolbar2 tb = ((MdToolkit)site().toolkit()).createToolbar( parent, SWT.FLAT );
+//        on( tb.getControl() ).fill().noTop();
+//        tb.getControl().moveAbove( null );
+//        ContributionManager.instance().contributeTo( tb, this, BOTTOM_TOOLBAR_TAG );
         
         // table area
         tableParent = on( site().toolkit().createComposite( parent, SWT.NONE ) )
-                .fill().bottom( tb.getControl() ).noTop().height( 0 ).control();
+                .fill().noTop().height( 0 ).control();
         
         // mapViewer
         try {
@@ -251,8 +265,8 @@ public class ProjectMapPanel
      *
      * @param creator
      */
-    public void updateButtomView( Consumer<Composite> creator ) {
-        on( tableParent ).height( 200 );
+    protected void updateButtomView( Consumer<Composite> creator ) {
+        on( tableParent ).height( 250 );
         
         UIUtils.disposeChildren( tableParent );
         creator.accept( tableParent );
@@ -260,10 +274,32 @@ public class ProjectMapPanel
     }
 
 
-    public void closeButtomView() {
+    protected void closeButtomView() {
         on( tableParent ).height( 0 );
         UIUtils.disposeChildren( tableParent );
         tableParent.getParent().layout( true );
+    }
+    
+    
+    /**
+     * Creates the table for the current {@link #featureLayer}.
+     */
+    protected void createTableView() {
+        updateButtomView( parent -> {            
+            tk().createFlowText( parent, " Loading " + featureLayer.get().layer().label.get() + "..." );
+            parent.layout();
+
+            UIThreadExecutor.async( () -> {
+                UIUtils.disposeChildren( parent );
+                new FeatureSelectionTable( parent, featureLayer.get(), ProjectMapPanel.this ) {
+                    @Override
+                    protected void close() {
+                        featureLayer.set( null );
+                    }
+                };
+                parent.layout();
+            });
+        });
     }
     
 }

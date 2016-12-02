@@ -14,10 +14,11 @@
  */
 package org.polymap.p4.layer;
 
+import static org.apache.commons.lang3.StringUtils.abbreviate;
 import static org.polymap.core.data.DataPlugin.ff;
-import static org.polymap.core.runtime.event.TypeEventFilter.ifType;
 import static org.polymap.core.ui.FormDataFactory.on;
 import static org.polymap.core.ui.SelectionAdapter.on;
+import static org.polymap.core.ui.UIUtils.selectionListener;
 import static org.polymap.rhei.batik.app.SvgImageRegistryHelper.DISABLED12;
 
 import java.io.IOException;
@@ -29,6 +30,7 @@ import org.opengis.feature.Feature;
 import org.opengis.feature.type.PropertyDescriptor;
 import org.opengis.filter.Filter;
 import org.opengis.filter.PropertyIsLike;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -36,19 +38,27 @@ import org.apache.commons.logging.LogFactory;
 import com.vividsolutions.jts.geom.Geometry;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Label;
+
 import org.eclipse.jface.viewers.StructuredSelection;
 
 import org.polymap.core.runtime.event.EventHandler;
 import org.polymap.core.runtime.event.EventManager;
+import org.polymap.core.runtime.event.TypeEventFilter;
 import org.polymap.core.ui.FormLayoutFactory;
 
 import org.polymap.rhei.batik.BatikApplication;
+import org.polymap.rhei.batik.BatikPlugin;
 import org.polymap.rhei.batik.IPanel;
+import org.polymap.rhei.batik.app.SvgImageRegistryHelper;
 import org.polymap.rhei.batik.contribution.ContributionManager;
 import org.polymap.rhei.batik.toolkit.ActionText;
 import org.polymap.rhei.batik.toolkit.ClearTextAction;
 import org.polymap.rhei.batik.toolkit.TextActionItem;
+import org.polymap.rhei.batik.toolkit.md.MdAppDesign;
+import org.polymap.rhei.batik.toolkit.md.MdAppDesign.FontStyle;
 import org.polymap.rhei.batik.toolkit.md.MdToolbar2;
 import org.polymap.rhei.batik.toolkit.md.MdToolkit;
 import org.polymap.rhei.table.DefaultFeatureTableColumn;
@@ -63,9 +73,9 @@ import org.polymap.p4.P4Plugin;
  *
  * @author <a href="http://www.polymap.de">Falko Bräutigam</a>
  */
-public class FeatureSelectionTable {
+public abstract class FeatureSelectionTable {
 
-    private static Log log = LogFactory.getLog( FeatureSelectionTable.class );
+    private static final Log log = LogFactory.getLog( FeatureSelectionTable.class );
     
     public static final String          TOOLBAR_TAG = "FeatureSelectionTable";
 
@@ -95,11 +105,25 @@ public class FeatureSelectionTable {
 
         // topbar
         Composite topbar = on( tk().createComposite( parent ) ).fill().noBottom().height( 36 ).control();
-        topbar.setLayout( FormLayoutFactory.defaults().spacing( 3 ).margins( 3 ).create() );
+        topbar.setLayout( FormLayoutFactory.defaults().spacing( 10 ).margins( 3 ).create() );
     
+        // closeBtn
+        Button closeBtn = tk().createButton( topbar, "", SWT.PUSH, SWT.FLAT );
+        closeBtn.setToolTipText( "Close table" );
+        closeBtn.setImage( BatikPlugin.images().svgImage( "close.svg", SvgImageRegistryHelper.NORMAL12 ) ); //P4Plugin.TOOLBAR_ICON_CONFIG ) );
+        on( closeBtn ).left( 0 ).top( 0 ).height( 26 ).width( 28 );
+        closeBtn.addSelectionListener( selectionListener( ev -> {
+            close();
+        }));
+        
+        // title
+        Label title = tk().createLabel( topbar, abbreviate( featureLayer.layer().label.get(), 20 ) );
+        title.setFont( MdAppDesign.font( FontStyle.Title ) );
+        on( title ).top( 0, 1 ).left( closeBtn, -8 );
+        
         // seach
         createTextSearch( topbar );
-        on( searchText.getControl() ).fill().right( 38 );
+        on( searchText.getControl() ).left( title ).top( 0 ).width( 250 );
         
         // toolbar
         toolbar = tk().createToolbar( topbar,  SWT.FLAT );
@@ -111,12 +135,12 @@ public class FeatureSelectionTable {
         on( viewer.getTable() ).fill().top( topbar );
         
         // listen to commit events
-        EventManager.instance().subscribe( this, ifType( FeatureEvent.class, ev -> 
+        EventManager.instance().subscribe( this, TypeEventFilter.ifType( FeatureEvent.class, ev -> 
                 ev.getType() == Type.COMMIT &&
                 ev.getFeatureSource() == fs ) );
         
         // listen to click events
-        EventManager.instance().subscribe( this, ifType( FeatureClickEvent.class, ev -> 
+        EventManager.instance().subscribe( this, TypeEventFilter.ifType( FeatureClickEvent.class, ev -> 
                 ev.getSource() == this.featureLayer &&
                 ev.clicked.isPresent() ) );
     }
@@ -125,6 +149,9 @@ public class FeatureSelectionTable {
     protected MdToolkit tk() {
         return (MdToolkit)panel.site().toolkit();
     }
+    
+    
+    protected abstract void close();
     
     
     protected void createTableViewer( Composite parent ) {

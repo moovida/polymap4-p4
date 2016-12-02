@@ -298,7 +298,7 @@ public abstract class FeatureStyleEditor {
         }
 
         @Override
-        protected void onSelectionChange( MdListViewer viewer, Object elm ) {
+        protected void onSelection( MdListViewer viewer, Object elm, boolean selected ) {
             ((Style)elm).active.set( isSelected( elm ) );
         }
     }
