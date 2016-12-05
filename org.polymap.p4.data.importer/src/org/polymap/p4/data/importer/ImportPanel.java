@@ -262,7 +262,7 @@ public class ImportPanel
                 fab.setToolTipText( "Import data" );
             }
             else {
-                fab = tk.createFab( ImporterPlugin.images().svgImage( "arrow-right.svg", WHITE24 ), SWT.RIGHT );
+                fab = tk.createFab( null, ImporterPlugin.images().svgImage( "arrow-right.svg", WHITE24 ), SWT.RIGHT );
                 fab.setToolTipText( "Send these data to the next stage" );
             }
             fab.getParent().layout();

@@ -73,8 +73,7 @@ public class NewLayerContribution
     @Override
     public void fillFab( IContributionSite site, IPanel panel ) {
         if (panel instanceof ResourceInfoPanel) {
-            Button fab = ((MdToolkit)site.toolkit()).createFab();
-            fab.setImage( P4Plugin.images().svgImage( "layers.svg", P4Plugin.HEADER_ICON_CONFIG ) );
+            Button fab = ((MdToolkit)site.toolkit()).createFab( P4Plugin.images().svgImage( "layers.svg", P4Plugin.HEADER_ICON_CONFIG ) );
             fab.setToolTipText( "Create a new layer for this data set" );
             fab.addSelectionListener( new SelectionAdapter() {
                 @Override
