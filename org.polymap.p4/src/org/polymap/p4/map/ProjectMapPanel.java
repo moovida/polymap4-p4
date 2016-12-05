@@ -60,12 +60,14 @@ import org.polymap.rhei.batik.PanelIdentifier;
 import org.polymap.rhei.batik.PropertyAccessEvent;
 import org.polymap.rhei.batik.Scope;
 import org.polymap.rhei.batik.contribution.ContributionManager;
+import org.polymap.rhei.batik.toolkit.ActionItem;
 import org.polymap.rhei.batik.toolkit.Snackbar.Appearance;
 import org.polymap.p4.Messages;
 import org.polymap.p4.P4AppDesign;
 import org.polymap.p4.P4Panel;
 import org.polymap.p4.P4Plugin;
 import org.polymap.p4.layer.FeatureSelectionTable;
+import org.polymap.p4.layer.LayersCatalogsPanel;
 import org.polymap.p4.project.ProjectRepository;
 import org.polymap.rap.openlayers.base.OlEvent;
 import org.polymap.rap.openlayers.base.OlEventListener;
@@ -223,7 +225,11 @@ public class ProjectMapPanel
             }
         }
         else {
-            tk().createSnackbar( Appearance.FadeIn, "No layer activated" );
+            tk().createSnackbar( Appearance.FadeIn, "No layer choosen to be <em>selectable</em>", new ActionItem( null )
+                    .action.put( ev2 -> {
+                        getContext().openPanel( site().path(), LayersCatalogsPanel.ID );
+                    })
+                    .text.put( "Layers..." ) );
         }
     }
 

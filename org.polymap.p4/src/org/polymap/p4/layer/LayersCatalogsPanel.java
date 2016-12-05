@@ -45,6 +45,7 @@ import org.polymap.core.ui.SelectionAdapter;
 import org.polymap.core.ui.UIUtils;
 
 import org.polymap.rhei.batik.PanelIdentifier;
+import org.polymap.rhei.batik.help.HelpAwarePanel;
 import org.polymap.rhei.batik.toolkit.DefaultToolkit;
 import org.polymap.rhei.batik.toolkit.md.MdListViewer;
 
@@ -61,7 +62,8 @@ import org.polymap.p4.map.ProjectMapPanel;
  * @author Falko Bräutigam
  */
 public class LayersCatalogsPanel
-        extends P4Panel {
+        extends P4Panel
+        implements HelpAwarePanel {
 
     private static final Log log = LogFactory.getLog( LayersCatalogsPanel.class );
 
@@ -82,6 +84,13 @@ public class LayersCatalogsPanel
     private LayersPanel         layersPanel;
 
     
+    @Override
+    public String helpCmsPath() {
+        // XXX Arena has no access to help CMS yet
+        return "ui/layersCatalogs-welcome.md";
+    }
+
+
     @Override
     public boolean beforeInit() {
         if (parentPanel().orElse( null ) instanceof ProjectMapPanel) {
