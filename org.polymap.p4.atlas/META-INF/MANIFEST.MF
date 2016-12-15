@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Atlas
+Bundle-SymbolicName: org.polymap.p4.atlas
+Bundle-Version: 1.0.0.qualifier
+Bundle-Vendor: polymap.org
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
