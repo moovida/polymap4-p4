@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.rap.ui.entrypoint">
+      <entrypoint
+            brandingId="org.polymap.rhei.batik.branding"
+            class="org.polymap.rhei.batik.BatikApplication"
+            id="org.polymap.p4.atlas.entrypoint"
+            path="/atlas">
+      </entrypoint>
+   </extension>
+   <extension
+         point="org.polymap.rhei.batik.design">
+      <design
+            class="org.polymap.p4.atlas.ui.AtlasAppDesign"
+            id="org.polymap.p4.atlas.design"
+            servletNameMatcher="/atlas">
+      </design>
+   </extension>
+   <extension
+         point="org.polymap.rhei.batik.panels">
+      <panel
+            class="org.polymap.p4.atlas.ui.SearchPanel"
+            id="org.polymap.p4.atlas.AtlasSearchPanel"
+            stackPriority="100">
+      </panel>
+      <panel
+            class="org.polymap.p4.atlas.ui.AtlasMapPanel"
+            id="org.polymap.p4.atlas.AtlasMapPanel">
+      </panel>
+      <panel
+            class="org.polymap.p4.atlas.ui.AtlasLayersPanel"
+            id="org.polymap.p4.atlas.AtlasLayersPanel"
+            stackPriority="10">
+      </panel>
+   </extension>
+   <extension
+         point="org.polymap.rhei.batik.panelFilters">
+      <panelFilter
+            class="org.polymap.p4.atlas.ui.AtlasPanelFilter"
+            servletNameMatcher="/atlas">
+      </panelFilter>
+   </extension>
+
+</plugin>
