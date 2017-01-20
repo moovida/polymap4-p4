@@ -16,8 +16,10 @@ package org.polymap.p4.atlas.ui;
 
 import static org.polymap.core.runtime.event.TypeEventFilter.ifType;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -26,12 +28,15 @@ import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.Viewer;
 
 import org.polymap.core.mapeditor.MapViewer;
+import org.polymap.core.project.ILayer;
 import org.polymap.core.project.IMap;
 import org.polymap.core.project.ProjectNode.ProjectNodeCommittedEvent;
+import org.polymap.core.runtime.config.Config;
 import org.polymap.core.runtime.event.EventHandler;
 import org.polymap.core.runtime.event.EventManager;
 import org.polymap.p4.atlas.AtlasFeatureLayer;
-import org.polymap.p4.atlas.AtlasFeatureLayer.PropertyChangeEvent;
+import org.polymap.p4.atlas.LayerQueryBuilder;
+import org.polymap.p4.atlas.PropertyChangeEvent;
 
 /**
  * Provides the content of an {@link IMap}.
@@ -49,6 +54,9 @@ public class AtlasMapContentProvider
     private IMap                map;
 
     private MapViewer           viewer;
+    
+    /** Last result of {@link #getElements(Object)}. */
+    private List<ILayer>        elements = Collections.EMPTY_LIST;
 
 
     @Override
@@ -62,11 +70,18 @@ public class AtlasMapContentProvider
         
         // listen to AtlasFeatureLayer#visible
         EventManager.instance().subscribe( this, ifType( PropertyChangeEvent.class, ev -> {
-            String layerId = ev.getSource().layer().id();
-            log.info( "Check (visible): " + ev.getSource().layer().label.get() );
-            return map.layers.stream()
-                    .filter( l -> l.id().equals( layerId ) )
-                    .findAny().isPresent();
+            Config prop = ev.prop.get();
+            return prop.equals( AtlasFeatureLayer.TYPE.visible )
+                    || prop.equals( LayerQueryBuilder.TYPE.queryText );
+            
+//            if (ev.getSource() instanceof AtlasFeatureLayer) {
+//                String layerId = ((AtlasFeatureLayer)ev.getSource()).layer().id();
+//                log.info( "Check (visible): " + ((AtlasFeatureLayer)ev.getSource()).layer().label.get() );
+//                return map.layers.stream()
+//                        .filter( l -> l.id().equals( layerId ) )
+//                        .findAny().isPresent();
+//            }
+//            return false;
         }));
     }
 
@@ -81,7 +96,7 @@ public class AtlasMapContentProvider
 
     @Override
     public Object[] getElements( Object inputElement ) {
-        return map.layers.stream()
+        elements = map.layers.stream()
                 .filter( l -> { 
                     try { 
                         Optional<AtlasFeatureLayer> afl = AtlasFeatureLayer.of( l ).get();
@@ -91,13 +106,25 @@ public class AtlasMapContentProvider
                         log.warn( "", e ); return false; 
                     }
                 })
-                .toArray();
+                .collect( Collectors.toList() );
+        return elements.toArray();
     }
 
 
-    @EventHandler( display=true, delay=500 )
+    @EventHandler( display=true, delay=750 )
     protected void onPropertyChange( List<PropertyChangeEvent> evs ) {
-        viewer.refresh();
+        for (PropertyChangeEvent ev : evs) {
+            Config prop = ev.prop.get();
+            if (prop.equals( AtlasFeatureLayer.TYPE.visible )) {
+                viewer.refresh();
+            }
+            else if (prop.equals( LayerQueryBuilder.TYPE.queryText )) {
+                elements.stream().forEach( l -> viewer.refresh( l ) );
+            }
+            else {
+                throw new RuntimeException( "Unhandled event property type: " + prop );
+            }
+        }
     }
     
 }

@@ -14,10 +14,12 @@
  */
 package org.polymap.p4.atlas;
 
-import java.util.EventObject;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
+
+import org.geotools.data.Query;
+import org.opengis.filter.Filter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -27,16 +29,10 @@ import com.google.common.collect.MapMaker;
 import org.polymap.core.project.ILayer;
 import org.polymap.core.runtime.config.Concern;
 import org.polymap.core.runtime.config.Config;
-import org.polymap.core.runtime.config.Config2;
 import org.polymap.core.runtime.config.Configurable;
-import org.polymap.core.runtime.config.ConfigurationFactory;
 import org.polymap.core.runtime.config.DefaultBoolean;
-import org.polymap.core.runtime.config.DefaultPropertyConcern;
-import org.polymap.core.runtime.config.Immutable;
-import org.polymap.core.runtime.config.Mandatory;
-import org.polymap.core.runtime.event.EventHandler;
-import org.polymap.core.runtime.event.EventManager;
 import org.polymap.core.runtime.session.SessionContext;
+import org.polymap.core.runtime.session.SessionSingleton;
 
 import org.polymap.p4.layer.FeatureLayer;
 
@@ -49,6 +45,8 @@ public class AtlasFeatureLayer
         extends Configurable {
 
     private static final Log log = LogFactory.getLog( AtlasFeatureLayer.class );
+    
+    public static final AtlasFeatureLayer   TYPE = new AtlasFeatureLayer();
     
     private static ConcurrentMap<FeatureLayer,AtlasFeatureLayer>  instances = new MapMaker().weakKeys().makeMap();
             
@@ -64,17 +62,33 @@ public class AtlasFeatureLayer
         return FeatureLayer.of( layer ).thenApply( optionalFeatureLayer -> 
                 optionalFeatureLayer.map( fl -> instances.computeIfAbsent( fl, _fl -> new AtlasFeatureLayer( _fl ) ) ) );
     }
+    
+    /**
+     * The fulltext query and map extent commonly used to filter the features of all
+     * layers of the current session.
+     */
+    public static LayerQueryBuilder query() {
+        return SessionHolder.instance( SessionHolder.class ).layerQuery;
+    }
 
+    static class SessionHolder
+            extends SessionSingleton {
+        public LayerQueryBuilder    layerQuery = new LayerQueryBuilder();
+    }
 
+    
     // instance *******************************************
         
-    private FeatureLayer        featureLayer;
+    private FeatureLayer            featureLayer;
 
     /** Layer is visible in the map. */
     @DefaultBoolean( false )
     @Concern( PropertyChangeEvent.Fire.class )
-    public Config<Boolean>      visible;
+    public Config<Boolean>          visible;
     
+    
+    protected AtlasFeatureLayer() {
+    }
     
     protected AtlasFeatureLayer( FeatureLayer featureLayer ) {
         this.featureLayer = featureLayer;
@@ -84,63 +98,21 @@ public class AtlasFeatureLayer
         return featureLayer;
     }
 
-    /** Shortcut to {@link #featureLayer}.layer(). */
+    /** 
+     * Shortcut to {@link #featureLayer}.layer(). 
+     */
     public ILayer layer() {
         return featureLayer.layer();
     }
 
-
     /**
-     * 
+     * Builds a {@link Query} using the currently defined {@link #layerQuery}.
+     *
+     * @return Newly created {@link Query}.
+     * @throws Exception
      */
-    public static class PropertyChangeEvent
-            extends EventObject {
-
-        @Mandatory @Immutable
-        public Config<Config>           prop;
-        
-//        @Mandatory @Immutable
-//        public Config<Object>           oldValue;
-
-        @Mandatory @Immutable
-        public Config<Object>           newValue;
-
-
-        public PropertyChangeEvent( AtlasFeatureLayer source) {
-            super( source );
-            ConfigurationFactory.inject( this );
-        }
-
-        @Override
-        public AtlasFeatureLayer getSource() {
-            return (AtlasFeatureLayer)super.getSource();
-        }
-
-        /**
-         * 
-         */
-        public static class Fire
-                extends DefaultPropertyConcern {
-
-            /**
-             * This is called *before* the {@link Config2} property is set. However, there is no
-             * race condition between event handler thread, that might access property value, and
-             * the current thread, that sets the property value, because most {@link EventHandler}s
-             * are done in display thread.
-             */
-            @Override
-            public Object doSet( Object obj, Config prop, Object newValue ) {
-                PropertyChangeEvent ev = new PropertyChangeEvent( prop.info().getHostObject() );
-                ev.prop.set( prop );
-//                ev.oldValue.set( prop.info().getRawValue() );
-                ev.newValue.set( newValue );
-                log.info( "Publishing: " + prop.info().getName() + " => " + newValue );
-                EventManager.instance().publish( ev );
-                log.info( "Publised: " + prop.info().getName() + " => " + newValue );
-                
-                return newValue;
-            }
-        }
+    public Filter fulltextFilter() throws Exception {
+        return query().fulltextFilter( layer() );
     }
 
 }

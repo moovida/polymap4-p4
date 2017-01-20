@@ -12,7 +12,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  */
-package org.polymap.p4.atlas.index;
+package org.polymap.p4.atlas;
 
 import static org.polymap.core.data.DataPlugin.ff;
 
@@ -20,12 +20,12 @@ import org.geotools.data.Query;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.opengis.filter.Filter;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-
 import org.polymap.core.project.ILayer;
-import org.polymap.core.runtime.config.Config2;
+import org.polymap.core.runtime.config.Concern;
+import org.polymap.core.runtime.config.Config;
 import org.polymap.core.runtime.config.ConfigurationFactory;
-import org.polymap.core.runtime.config.Immutable;
 
+import org.polymap.p4.atlas.index.AtlasIndex;
 import org.polymap.p4.layer.FeatureLayer;
 
 /**
@@ -35,34 +35,52 @@ import org.polymap.p4.layer.FeatureLayer;
  */
 public class LayerQueryBuilder {
 
-    @Immutable
-    public Config2<LayerQueryBuilder,String>               queryText;
+    public static final LayerQueryBuilder   TYPE = new LayerQueryBuilder();
 
-    @Immutable
-    public Config2<LayerQueryBuilder,ReferencedEnvelope>   mapExtent;
+    @Concern( PropertyChangeEvent.Fire.class )
+    public Config<String>               queryText;
+
+    @Concern( PropertyChangeEvent.Fire.class )
+    public Config<ReferencedEnvelope>   mapExtent;
 
 
     /** Constructs a new instance with no restrictions. */
-    public LayerQueryBuilder() {
+    protected LayerQueryBuilder() {
         ConfigurationFactory.inject( this );
     }
 
+    
     public Query build( ILayer layer ) throws Exception {
-        Filter filter = Filter.INCLUDE;
-        //
-        if (queryText.isPresent() && mapExtent.isPresent()) {
-            AtlasIndex index = AtlasIndex.instance();
+        Filter extentFilter = extentFilter( layer );
+        Filter textFilter = fulltextFilter( layer );
+        return new Query( "", ff.and( extentFilter, textFilter ) );
+    }
+
+
+    /**
+     *
+     */
+    protected Filter extentFilter( ILayer layer ) throws Exception {
+        Filter extentFilter = Filter.INCLUDE;
+        if (mapExtent.isPresent()) {
             CoordinateReferenceSystem layerCrs = FeatureLayer.of( layer ).get().get().featureSource().getSchema().getCoordinateReferenceSystem();
             ReferencedEnvelope transformedExtent = mapExtent.get().transform( layerCrs, true );
-            filter = ff.and(
-                    ff.bbox( ff.property( "" ), transformedExtent ),
-                    index.query( queryText.get(), layer ) );
+            extentFilter = ff.bbox( ff.property( "" ), transformedExtent );
         }
-        //
-        else if (queryText.isPresent() || mapExtent.isPresent()) {
-            throw new UnsupportedOperationException( "Both, queryText and mapExtent have to be set." );
+        return extentFilter;
+    }
+
+
+    /**
+     *
+     */
+    protected Filter fulltextFilter( ILayer layer ) throws Exception {
+        Filter textFilter = Filter.INCLUDE;
+        if (queryText.isPresent() && mapExtent.isPresent()) {
+            AtlasIndex index = AtlasIndex.instance();
+            textFilter = index.query( queryText.get(), layer );
         }
-        return new Query( "", filter );
+        return textFilter;
     }
     
 }

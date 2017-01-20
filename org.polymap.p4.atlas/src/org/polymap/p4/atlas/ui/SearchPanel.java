@@ -16,16 +16,10 @@ package org.polymap.p4.atlas.ui;
 
 import java.util.Optional;
 
-import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.json.JSONArray;
 import org.opengis.feature.Feature;
 import org.opengis.feature.Property;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import com.vividsolutions.jts.geom.Envelope;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
@@ -33,7 +27,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.jface.viewers.CellLabelProvider;
 import org.eclipse.jface.viewers.ViewerCell;
 
-import org.polymap.core.mapeditor.MapViewer;
 import org.polymap.core.project.ILayer;
 import org.polymap.core.project.IMap;
 import org.polymap.core.runtime.UIJob;
@@ -57,10 +50,6 @@ import org.polymap.rhei.batik.toolkit.md.TreeExpandStateDecorator;
 import org.polymap.p4.P4Panel;
 import org.polymap.p4.atlas.AtlasFeatureLayer;
 import org.polymap.p4.atlas.AtlasPlugin;
-import org.polymap.p4.atlas.index.LayerQueryBuilder;
-import org.polymap.rap.openlayers.base.OlEvent;
-import org.polymap.rap.openlayers.base.OlEventListener;
-import org.polymap.rap.openlayers.view.View;
 
 /**
  * 
@@ -68,8 +57,7 @@ import org.polymap.rap.openlayers.view.View;
  * @author Falko Bräutigam
  */
 public class SearchPanel
-        extends P4Panel
-        implements OlEventListener {
+        extends P4Panel {
 
     private static final Log log = LogFactory.getLog( SearchPanel.class );
     
@@ -79,12 +67,6 @@ public class SearchPanel
     @Mandatory
     @Scope( AtlasPlugin.Scope )
     protected Context<IMap>         map;
-
-    /** Inbound: */
-    @Scope( AtlasPlugin.Scope )
-    protected Context<MapViewer<ILayer>> mapExtent;
-    
-    private ReferencedEnvelope      currentExtent;
 
     private ActionText              searchText;
 
@@ -107,11 +89,6 @@ public class SearchPanel
 
     @Override
     public void dispose() {
-        View view = mapExtent.get().getMap().view.get();
-        view.removeEventListener( View.Event.resolution, this );
-        view.removeEventListener( View.Event.rotation, this );
-        view.removeEventListener( View.Event.center, this );
-
         super.dispose();
     }
 
@@ -119,7 +96,7 @@ public class SearchPanel
     @Override
     public void createContents( Composite parent ) {
         site().title.set( "Suchen" );
-        parent.setLayout( FormLayoutFactory.defaults().margins( 0, 8 ).spacing( 8 ).create() );
+        parent.setLayout( FormLayoutFactory.defaults().margins( 0, 12 ).spacing( 6 ).create() );
         
         // searchText
         searchText = tk().createActionText( parent, "" );
@@ -142,43 +119,21 @@ public class SearchPanel
                 SelectionAdapter.on( ev.getSelection() ).first( ILayer.class ).ifPresent( l -> doToggleLayer( l ) ) );
         viewer.setInput( map.get() );
 
-        // XXX rough way to get mapExtent changes
-        View view = mapExtent.get().getMap().view.get();
-        view.addEventListener( View.Event.resolution, this );
-        view.addEventListener( View.Event.rotation, this );
-        view.addEventListener( View.Event.center, this );
-
         // layout
-        FormDataFactory.on( searchText.getControl() ).fill().noBottom();
+        FormDataFactory.on( searchText.getControl() ).fill().height( 30 ).noBottom();
         FormDataFactory.on( viewer.getTree() ).fill().top( searchText.getControl() );
     }
 
     
-    @Override
-    public void handleEvent( OlEvent ev ) {
-        JSONArray json = ev.properties().optJSONArray( "extent" );
-        if (json != null) {
-            Envelope extent = new Envelope( 
-                    json.getDouble( 0 ), json.getDouble( 2 ), 
-                    json.getDouble( 1 ), json.getDouble( 3 ) );
-
-            CoordinateReferenceSystem crs = mapExtent.get().getMapCRS();
-            ReferencedEnvelope newExtent = ReferencedEnvelope.create( extent, crs );
-            if (!newExtent.equals( currentExtent )) {
-                contentProvider.updateViewer( new LayerQueryBuilder()
-                        .queryText.put( searchText.getTextText() )
-                        .mapExtent.put( currentExtent = newExtent ) );
-            }
-        }
-    }
-
-    
     protected void doSearch() {
-        Envelope extent = mapExtent.get().mapExtent.get();
-        CoordinateReferenceSystem crs = mapExtent.get().getMapCRS();
-        contentProvider.updateViewer( new LayerQueryBuilder()
-                .queryText.put( searchText.getTextText() )
-                .mapExtent.put( ReferencedEnvelope.create( extent, crs ) ) );
+        AtlasFeatureLayer.query().queryText.set( searchText.getTextText() );
+
+//        Envelope extent = mapExtent.get().mapExtent.get();
+//        CoordinateReferenceSystem crs = mapExtent.get().getMapCRS();
+//                
+//        contentProvider.updateViewer( new LayerQueryBuilder()
+//                .queryText.put( searchText.getTextText() )
+//                .mapExtent.put( ReferencedEnvelope.create( extent, crs ) ) );
     }
     
 

@@ -22,6 +22,7 @@ import org.geotools.feature.FeatureCollection;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.json.JSONArray;
+import org.json.JSONObject;
 import org.opengis.feature.Feature;
 import org.opengis.filter.Filter;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -58,17 +59,19 @@ import org.polymap.rhei.batik.Scope;
 import org.polymap.rhei.batik.contribution.ContributionManager;
 import org.polymap.rhei.batik.toolkit.ActionItem;
 import org.polymap.rhei.batik.toolkit.Snackbar.Appearance;
+
 import org.polymap.p4.Messages;
 import org.polymap.p4.P4Panel;
+import org.polymap.p4.atlas.AtlasFeatureLayer;
 import org.polymap.p4.atlas.AtlasPlugin;
 import org.polymap.p4.layer.LayersCatalogsPanel;
-import org.polymap.p4.map.ProjectLayerProvider;
 import org.polymap.p4.project.ProjectRepository;
 import org.polymap.rap.openlayers.base.OlEvent;
 import org.polymap.rap.openlayers.base.OlEventListener;
 import org.polymap.rap.openlayers.base.OlMap.Event;
 import org.polymap.rap.openlayers.control.MousePositionControl;
 import org.polymap.rap.openlayers.control.ScaleLineControl;
+import org.polymap.rap.openlayers.view.View;
 
 /**
  * 
@@ -79,7 +82,7 @@ public class AtlasMapPanel
         extends P4Panel
         implements OlEventListener {
 
-    private static Log log = LogFactory.getLog( AtlasMapPanel.class );
+    private static final Log log = LogFactory.getLog( AtlasMapPanel.class );
 
     public static final PanelIdentifier ID = PanelIdentifier.parse( "start" );
     
@@ -92,13 +95,9 @@ public class AtlasMapPanel
     @Scope( AtlasPlugin.Scope )
     protected Context<IMap>             map;
 
-    /**
-     * Outbound:
-     */
-    @Scope( AtlasPlugin.Scope )
-    protected Context<MapViewer<ILayer>> mapExtent;
-
     public MapViewer<ILayer>            mapViewer;
+
+    private ReferencedEnvelope          currentExtent;
 
     
     @Override
@@ -128,6 +127,12 @@ public class AtlasMapPanel
     @Override
     public void dispose() {
         EventManager.instance().unsubscribe( this );
+        
+        mapViewer.getMap().removeEventListener( Event.click, this );
+        View view = mapViewer.getMap().view.get();
+        view.removeEventListener( View.Event.resolution, this );
+        view.removeEventListener( View.Event.rotation, this );
+        view.removeEventListener( View.Event.center, this );
     }
 
     
@@ -156,7 +161,7 @@ public class AtlasMapPanel
             mapViewer = new MapViewer( parent );
             // triggers {@link MapViewer#refresh()} on {@link ProjectNodeCommittedEvent} 
             mapViewer.contentProvider.set( new AtlasMapContentProvider() );
-            mapViewer.layerProvider.set( new ProjectLayerProvider() );
+            mapViewer.layerProvider.set( new AtlasMapLayerProvider() );
             
             ReferencedEnvelope maxExtent = map.get().maxExtent();
             log.info( "maxExtent: " + maxExtent );
@@ -171,10 +176,15 @@ public class AtlasMapPanel
             mapViewer.getControl().setBackground( UIUtils.getColor( 0xff, 0xff, 0xff ) );
             
             mapViewer.mapExtent.set( maxExtent );
-            mapExtent.set( mapViewer );
 
             //
             mapViewer.getMap().addEventListener( Event.click, this );
+
+            // XXX rough way to get mapExtent changes
+            View view = mapViewer.getMap().view.get();
+            view.addEventListener( View.Event.resolution, this );
+            view.addEventListener( View.Event.rotation, this );
+            view.addEventListener( View.Event.center, this );
         }
         catch (Exception e) {
             throw new RuntimeException( e );
@@ -187,24 +197,41 @@ public class AtlasMapPanel
     @Override
     public void handleEvent( OlEvent ev ) {
         log.info( "event: " + ev.properties() );
-        JSONArray coord = ev.properties().getJSONObject( "feature" ).getJSONArray( "coordinate" );
-        double x = coord.getDouble( 0 );
-        double y = coord.getDouble( 1 );
-        
-        if (featureLayer.isPresent()) {
-            try {
-                clickFeature( featureLayer.get().featureSource(), new Coordinate( x, y ) );
+        // feature click
+        JSONObject clickedFeature = ev.properties().optJSONObject( "feature" );
+        if (clickedFeature != null) {
+            JSONArray coord = clickedFeature.getJSONArray( "coordinate" );
+            double x = coord.getDouble( 0 );
+            double y = coord.getDouble( 1 );
+
+            if (featureLayer.isPresent()) {
+                try {
+                    clickFeature( featureLayer.get().featureSource(), new Coordinate( x, y ) );
+                }
+                catch (Exception e) {
+                    StatusDispatcher.handleError( "Unable to select feature.", e );
+                }
             }
-            catch (Exception e) {
-                StatusDispatcher.handleError( "Unable to select feature.", e );
+            else {
+                tk().createSnackbar( Appearance.FadeIn, "No layer choosen to be <em>selectable</em>", new ActionItem( null )
+                        .action.put( ev2 -> {
+                            getContext().openPanel( site().path(), LayersCatalogsPanel.ID );
+                        })
+                        .text.put( "Layers..." ) );
             }
         }
-        else {
-            tk().createSnackbar( Appearance.FadeIn, "No layer choosen to be <em>selectable</em>", new ActionItem( null )
-                    .action.put( ev2 -> {
-                        getContext().openPanel( site().path(), LayersCatalogsPanel.ID );
-                    })
-                    .text.put( "Layers..." ) );
+        // map extent
+        JSONArray json = ev.properties().optJSONArray( "extent" );
+        if (json != null) {
+            Envelope extent = new Envelope( 
+                    json.getDouble( 0 ), json.getDouble( 2 ), 
+                    json.getDouble( 1 ), json.getDouble( 3 ) );
+
+            CoordinateReferenceSystem crs = mapViewer.getMapCRS();
+            ReferencedEnvelope newExtent = ReferencedEnvelope.create( extent, crs );
+            if (!newExtent.equals( currentExtent )) {
+                AtlasFeatureLayer.query().mapExtent.set( currentExtent = newExtent );
+            }
         }
     }
 

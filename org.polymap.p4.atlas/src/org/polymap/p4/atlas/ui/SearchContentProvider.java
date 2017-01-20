@@ -15,6 +15,7 @@
 package org.polymap.p4.atlas.ui;
 
 import static org.polymap.core.runtime.UIThreadExecutor.logErrorMsg;
+import static org.polymap.core.runtime.event.TypeEventFilter.ifType;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -25,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
+import org.geotools.data.Query;
 import org.opengis.feature.Feature;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.logging.Log;
@@ -44,16 +46,18 @@ import org.polymap.core.runtime.config.Config;
 import org.polymap.core.runtime.config.Configurable;
 import org.polymap.core.runtime.config.DefaultInt;
 import org.polymap.core.runtime.config.Mandatory;
-
+import org.polymap.core.runtime.event.EventHandler;
+import org.polymap.core.runtime.event.EventManager;
 import org.polymap.p4.atlas.AtlasFeatureLayer;
-import org.polymap.p4.atlas.index.AtlasIndex;
-import org.polymap.p4.atlas.index.LayerQueryBuilder;
+import org.polymap.p4.atlas.LayerQueryBuilder;
+import org.polymap.p4.atlas.PropertyChangeEvent;
 import org.polymap.p4.layer.FeatureLayer;
 
 /**
- * Provides {@link ILayer}s of an {@link IMap} and the features thereof and
- * allows filtering using {@link AtlasIndex}.
- * 
+ * Provides {@link ILayer}s of an {@link IMap} and the features thereof. 
+ * Listens to {@link PropertyChangeEvent}s fired when {@link AtlasFeatureLayer#query()}
+ * has been changed.
+ *
  * @author Falko Bräutigam
  */
 public class SearchContentProvider
@@ -74,8 +78,6 @@ public class SearchContentProvider
     @DefaultInt( 25 )
     public Config<Integer>              maxResults;
     
-    private LayerQueryBuilder           queryBuilder = new LayerQueryBuilder();
-    
     private TreeViewer                  viewer;
     
     private IMap                        input;
@@ -83,8 +85,14 @@ public class SearchContentProvider
     private ConcurrentMap<Object,Object[]> cache = new ConcurrentHashMap( 32 );
     
     
+    public SearchContentProvider() {
+        EventManager.instance().subscribe( this, ifType( PropertyChangeEvent.class, ev -> 
+                ev.getSource() instanceof LayerQueryBuilder ) );
+    }
+    
     @Override
     public void dispose() {
+        EventManager.instance().unsubscribe( this );
     }
 
     @Override
@@ -94,8 +102,8 @@ public class SearchContentProvider
         flush();
     }
 
-    public void updateViewer( LayerQueryBuilder newQueryBuilder ) {
-        this.queryBuilder = newQueryBuilder;
+    @EventHandler( display=true, delay=100 )
+    public void onLayerQueryChange( List<PropertyChangeEvent> evs ) {
         flush();
         viewer.refresh();
     }
@@ -170,9 +178,11 @@ public class SearchContentProvider
        updateChildrenLoading( elm );
 
        UIJob.schedule( elm.label.get(), monitor -> {
+           Query query = AtlasFeatureLayer.query().build( elm );
+           
            FeatureLayer fl = FeatureLayer.of( elm ).get().get();
            PipelineFeatureSource fs = fl.featureSource();
-           Object[] children = fs.getFeatures( queryBuilder.build( elm ) ).toArray();
+           Object[] children = fs.getFeatures( query ).toArray();
            updateChildren( elm, children, currentChildCount );               
        });
    }
