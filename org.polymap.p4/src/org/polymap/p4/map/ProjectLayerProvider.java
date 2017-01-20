@@ -54,11 +54,11 @@ import org.polymap.rap.openlayers.source.WMSRequestParams;
 public class ProjectLayerProvider
         implements ILayerProvider<ILayer>, AutoCloseable {
 
-    private static Log log = LogFactory.getLog( ProjectLayerProvider.class );
+    private static final Log log = LogFactory.getLog( ProjectLayerProvider.class );
 
-    private String                          alias;
+    protected String                    alias;
     
-    private Map<String,ILayer>              layers = new ConcurrentHashMap();
+    protected Map<String,ILayer>        layers = new ConcurrentHashMap();
     
     
     public ProjectLayerProvider() {

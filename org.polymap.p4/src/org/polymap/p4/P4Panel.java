@@ -28,7 +28,6 @@ import org.polymap.rhei.batik.Scope;
 import org.polymap.rhei.batik.toolkit.md.MdToolkit;
 
 import org.polymap.p4.layer.FeatureLayer;
-import org.polymap.p4.layer.FeaturePanel;
 import org.polymap.p4.layer.LayersPanel;
 
 /**
@@ -39,7 +38,7 @@ import org.polymap.p4.layer.LayersPanel;
 public abstract class P4Panel
         extends DefaultPanel {
 
-    private static Log log = LogFactory.getLog( FeaturePanel.class );
+    private static final Log log = LogFactory.getLog( P4Panel.class );
     
     public static final int                 SIDE_PANEL_WIDTH = 400;
     
