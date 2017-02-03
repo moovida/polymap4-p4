@@ -10,7 +10,7 @@
 
 #### Install target platform
 
-  * `wget http://build.mapzone.io/jenkins/job/polymap4-targetplatform/ws/*zip*/polymap4-targetplatform.zip`
+  * Download [polymap4-targetplatform.zip](http://build.mapzone.io/jenkins/job/polymap4-targetplatform/ws/*zip*/polymap4-targetplatform.zip)
   * `unzip polymap4-targetplatform.zip`
   * Eclipse: Preferences->Plugin Developement->Target Platform->Add
 
