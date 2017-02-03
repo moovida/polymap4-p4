@@ -22,7 +22,9 @@
     * `git@github.com:Polymap4/polymap4-rap.git`
     * `git@github.com:Polymap4/polymap4-model.git`
     * `git@github.com:Polymap4/polymap4-p4.git`
-  * Import all plugins (wait for Eclipse to downloadjars from maven and compile everything)
+  * Import all plugins into workspace
+  * **Manually** build workspace (Ctrl-b)
+  * **Manually** build workspace, **again** (help Eclipse to find jars downloaded in previous build)
   
 #### Compile and Launch
 
