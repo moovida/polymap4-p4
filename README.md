@@ -22,12 +22,18 @@
     * `git@github.com:Polymap4/polymap4-rap.git`
     * `git@github.com:Polymap4/polymap4-model.git`
     * `git@github.com:Polymap4/polymap4-p4.git`
+    
   * Import all plugins into workspace
-  * **Manually** build workspace (Ctrl-b)
-  * **Manually** build workspace, **again** (help Eclipse to find jars downloaded in previous build)
+
+#### Resolve dependencies and compile
+
+Some plugins contain Ant scripts called getjars.build.xml. Those scripts download referenced libraries from Maven repositories. The scripts are configured as Builders of the Eclipse projects. The Ant scripts are executed by Eclipse when manual Build is started.
+
+  * **Manually(!)** build workspace (Ctrl-b)
+  * **Manually** build workspace, **again(!)** (help Eclipse to find jars downloaded in previous build)
+  * ...until everything is compiled
   
-#### Compile and Launch
+#### Launch
 
-After importing all plugins into the workspace Eclipse automatically downloads all dependencies from maven repositories and compiles the sources. If this did not work properly ...
-
-  * ...
+  * Start **P4** launch configuration
+  * point your browser at: http://localhost:8080/p4
