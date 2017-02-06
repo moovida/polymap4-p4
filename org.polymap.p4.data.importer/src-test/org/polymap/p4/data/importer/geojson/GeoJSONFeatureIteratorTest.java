@@ -28,6 +28,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 public class GeoJSONFeatureIteratorTest {
 
     @Test
+    @SuppressWarnings( "resource" )
     public void wochenmaerkte() throws Exception {
         File file = new File( this.getClass().getResource( "playgrounds_kidsle_kb2.geojson" ).getFile() );
         GeoJSONFeatureIterator iterator = new GeoJSONFeatureIterator( file, Charset.forName( "utf-8" ), "test", CRS.decode( "EPSG:4326" ), new NullProgressMonitor() );
