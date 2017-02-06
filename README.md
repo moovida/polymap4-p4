@@ -27,7 +27,7 @@
 
 #### Resolve dependencies and compile
 
-Some plugins contain Ant scripts called getjars.build.xml. Those scripts download referenced libraries from Maven repositories. The scripts are configured as Builders of the Eclipse projects. The Ant scripts are executed by Eclipse when manual Build is started.
+Some plugins contain Ant scripts called `getjars.build.xml`. Those scripts download referenced libraries from Maven repositories. The scripts are configured as External Tool Builders. The Ant scripts are executed by Eclipse when manual Build is started.
 
   * **Manually(!)** build workspace (Ctrl-b)
   * **Manually** build workspace, **again(!)** (help Eclipse to find jars downloaded in previous build)
