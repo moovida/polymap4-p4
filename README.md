@@ -36,4 +36,4 @@ Some plugins contain Ant scripts called getjars.build.xml. Those scripts downloa
 #### Launch
 
   * Start **P4** launch configuration
-  * point your browser at: http://localhost:8080/p4
+  * point your browser at: [http://localhost:8080/p4](http://localhost:8080/p4)
