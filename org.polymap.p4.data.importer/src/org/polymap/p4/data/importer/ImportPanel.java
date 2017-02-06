@@ -83,6 +83,7 @@ import org.polymap.p4.P4Plugin;
 import org.polymap.p4.catalog.CatalogPanel;
 import org.polymap.p4.data.importer.ImportsLabelProvider.Type;
 import org.polymap.p4.data.importer.features.ImportFeaturesOperation;
+import org.polymap.p4.layer.LayersCatalogsPanel;
 import org.polymap.p4.layer.LayersPanel;
 import org.polymap.p4.map.ProjectMapPanel;
 import org.polymap.rap.updownload.upload.IUploadHandler;
@@ -98,7 +99,7 @@ public class ImportPanel
         extends P4Panel
         implements IUploadHandler {
 
-    private static Log log = LogFactory.getLog( ImportPanel.class );
+    private static final Log log = LogFactory.getLog( ImportPanel.class );
 
     public static final PanelIdentifier ID   = PanelIdentifier.parse( "dataimport" );
 
@@ -127,7 +128,7 @@ public class ImportPanel
         return parentPanel()
                 .filter( parent -> parent instanceof CatalogPanel 
                         || parent instanceof LayersPanel
-                        //|| parent instanceof LayersCatalogsPanel
+                        || parent instanceof LayersCatalogsPanel
                         || parent instanceof ProjectMapPanel )
                 .map( parent -> {
                     site().title.set( "" );

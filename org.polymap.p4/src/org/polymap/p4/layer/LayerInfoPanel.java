@@ -66,11 +66,14 @@ import org.polymap.p4.style.LayerStyleDashlet;
 public class LayerInfoPanel
         extends P4Panel {
 
-    private static Log log = LogFactory.getLog( LayerInfoPanel.class );
+    private static final Log log = LogFactory.getLog( LayerInfoPanel.class );
 
     public static final PanelIdentifier ID = PanelIdentifier.parse( "layer" );
     
     public static final String          DASHBOARD_ID = "org.polymap.p4.project.layer";
+    
+    /** Memento key of the last expanded dashlet class name. */
+    private static final String         MEMENTO_EXPANDED = "expanded";
     
     @Scope( P4Plugin.Scope )
     private Context<ILayer>             layer;
@@ -82,7 +85,13 @@ public class LayerInfoPanel
     
     @Override
     public void dispose() {
+        if (dashboard != null) {
+            dashboard.dashlets().stream()
+                    .filter( dashlet -> dashboard.isExpanded( dashlet ) ).findAny()
+                    .ifPresent( expanded -> site().memento().putString( MEMENTO_EXPANDED, expanded.getClass().getName() ) );
+        }
         EventManager.instance().unsubscribe( this );
+        super.dispose();
     }
 
 
@@ -101,23 +110,16 @@ public class LayerInfoPanel
         dashboard.addDashlet( new DeleteLayerDashlet()
                 .addConstraint( new PriorityConstraint( 0 ) ).setExpanded( false ) );
         
-//        try {
-//            NullProgressMonitor monitor = new NullProgressMonitor();
-//            P4Plugin.allResolver().metadata( layer.get(), monitor ).ifPresent( serviceInfo -> {
-//                dashboard.addDashlet( new MetadataInfoDashlet( serviceInfo )
-//                        .addConstraint( new PriorityConstraint( 9 ) ) );            
-//            });
-//            P4Plugin.allResolver().resInfo( layer.get(), monitor ).ifPresent( resInfo -> {
-//                dashboard.addDashlet( new ResourceInfoDashlet( resInfo )
-//                        .addConstraint( new PriorityConstraint( 10 ) ) );            
-//            });
-//        }
-//        catch (Exception e) {
-//            log.warn( "", e );
-//        }
         dashboard.createContents( parent );
         EventManager.instance().subscribe( this, ifType( ExpansionEvent.class, ev -> 
                 dashboard.dashlets().stream().anyMatch( d -> d.site().getPanelSection() == ev.getSource() ) ) );
+
+        // memento expanded dashlet
+        site().memento().optString( MEMENTO_EXPANDED ).ifPresent( classname -> {
+            dashboard.dashlets().stream()
+                    .filter( dashlet -> dashlet.getClass().getName().equals( classname ) )
+                    .findAny().ifPresent( dashlet -> dashboard.setExpanded( dashlet, true ) );
+        });
         
         // fab
         fab = tk().createFab();

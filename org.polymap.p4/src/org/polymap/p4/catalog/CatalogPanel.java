@@ -28,7 +28,6 @@ import org.eclipse.jface.viewers.ViewerCell;
 import org.polymap.core.catalog.IMetadata;
 import org.polymap.core.catalog.resolve.IResourceInfo;
 import org.polymap.core.catalog.ui.MetadataContentProvider;
-import org.polymap.core.catalog.ui.MetadataDescriptionProvider;
 import org.polymap.core.catalog.ui.MetadataLabelProvider;
 import org.polymap.core.project.IMap;
 import org.polymap.core.ui.FormDataFactory;
@@ -111,7 +110,7 @@ public class CatalogPanel
         viewer.setContentProvider( new MetadataContentProvider( P4Plugin.allResolver() ) );
         viewer.firstLineLabelProvider.set( new TreeExpandStateDecorator(
                 viewer, new MetadataLabelProvider() ) );
-        viewer.secondLineLabelProvider.set( new MetadataDescriptionProvider() );
+        //viewer.secondLineLabelProvider.set( new MetadataDescriptionProvider() );
         viewer.iconProvider.set( new MetadataIconProvider() );
         viewer.firstSecondaryActionProvider.set( new CreateLayerAction() );
         viewer.addOpenListener( this );
