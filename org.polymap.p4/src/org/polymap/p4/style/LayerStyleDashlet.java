@@ -22,10 +22,12 @@ import org.eclipse.swt.widgets.Composite;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 
+import org.polymap.core.data.PipelineFeatureSource;
 import org.polymap.core.project.ILayer;
 import org.polymap.core.runtime.UIThreadExecutor;
 import org.polymap.core.ui.FormDataFactory;
 import org.polymap.core.ui.FormLayoutFactory;
+import org.polymap.core.ui.UIUtils;
 
 import org.polymap.rhei.batik.Context;
 import org.polymap.rhei.batik.PanelSite;
@@ -37,6 +39,7 @@ import org.polymap.rhei.batik.toolkit.md.MdToolkit;
 
 import org.polymap.p4.P4Plugin;
 import org.polymap.p4.layer.FeatureLayer;
+import org.polymap.p4.layer.RasterLayer;
 
 /**
  * 
@@ -55,7 +58,7 @@ public class LayerStyleDashlet
     
     private PanelSite                   panelSite;
     
-    private FeatureStyleEditor          editor;
+    private StyleEditor                 editor;
     
     
     public LayerStyleDashlet( PanelSite panelSite ) {
@@ -92,13 +95,24 @@ public class LayerStyleDashlet
     public void createContents( Composite parent ) {
         MdToolkit tk = (MdToolkit)getSite().toolkit();                    
 
+        // default message
+        parent.setLayout( FormLayoutFactory.defaults().margins( 10 ).create() );
+        FormDataFactory.on( tk.createLabel( parent, 
+                "Connecting data source of this layer...<br/><br/>(WMS layers do not have an editble style)", SWT.WRAP ) )
+                .fill().noBottom().height( 55 );
+        parent.layout( true, true );
+
+        // FeatureLayer?
         FeatureLayer.of( layer.get() ).thenAccept( fl -> {
             UIThreadExecutor.async( () -> {
                 if (fl.isPresent()) {
+                    UIUtils.disposeChildren( parent );
                     try {
-                        FeatureStyleEditorInput editorInput = new FeatureStyleEditorInput( 
-                                layer.get().styleIdentifier.get(), 
-                                fl.get().featureSource() );
+                        PipelineFeatureSource fs = fl.get().featureSource();
+                        FeatureStyleEditorInput editorInput = new FeatureStyleEditorInput(); 
+                        editorInput.styleIdentifier.set( layer.get().styleIdentifier.get() ); 
+                        editorInput.featureStore.set( fs );
+                        editorInput.featureType.set( fs.getSchema() );
                         
                         editor = new FeatureStyleEditor( editorInput ) {
                             @Override
@@ -113,11 +127,40 @@ public class LayerStyleDashlet
                         tk.createLabel( parent, "Unable to create styler." );            
                     }
                 }
-                else {
-                    parent.setLayout( FormLayoutFactory.defaults().margins( 10 ).create() );
-                    FormDataFactory.on( tk.createLabel( parent, 
-                            "This layer is connected to a WMS or raster data.<br/>The style cannot be modified.", SWT.WRAP ) )
-                            .fill().noBottom().height( 40 );
+                parent.getParent().getParent().layout( true, true );
+            });
+        })
+        .exceptionally( e -> {
+            log.warn( "", e );
+            tk.createLabel( parent, "Unable to data from layer." );
+            return null;
+        });
+        
+        // RasterLayer?
+        RasterLayer.of( layer.get() ).thenAccept( rl -> {
+            UIThreadExecutor.async( () -> {
+                if (rl.isPresent()) {
+                    UIUtils.disposeChildren( parent );
+                    try {
+                        RasterStyleEditorInput editorInput = new RasterStyleEditorInput();
+                        editorInput.styleIdentifier.set( layer.get().styleIdentifier.get() ); 
+                        editorInput.gridCoverageReader.set( rl.get().gridCoverageReader() );
+                        editorInput.gridCoverage.set( rl.get().gridCoverage() );
+                        
+                        editor = new RasterStyleEditor( editorInput ) {
+                            @Override
+                            protected void enableSubmit( boolean enabled ) {
+                                //site().enableSubmit( enabled, enabled );
+                                site().enableSubmit( true, true );
+                                parent.getParent().getParent().layout( true, true );
+                            }
+                        };
+                        editor.createContents( parent, tk );
+                    }
+                    catch (Exception e) {
+                        log.warn( "", e );
+                        tk.createLabel( parent, "Unable to create styler." );            
+                    }
                 }
                 parent.getParent().getParent().layout( true, true );
             });
@@ -127,6 +170,7 @@ public class LayerStyleDashlet
             tk.createLabel( parent, "Unable to data from layer." );
             return null;
         });
+
     }
     
 }

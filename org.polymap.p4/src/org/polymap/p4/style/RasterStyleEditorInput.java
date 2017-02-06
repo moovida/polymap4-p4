@@ -12,8 +12,8 @@
  */
 package org.polymap.p4.style;
 
-import org.geotools.data.FeatureStore;
-import org.opengis.feature.type.FeatureType;
+import org.geotools.coverage.grid.GridCoverage2D;
+import org.geotools.coverage.grid.io.GridCoverage2DReader;
 
 import org.polymap.core.runtime.config.Config;
 import org.polymap.core.runtime.config.Immutable;
@@ -24,15 +24,15 @@ import org.polymap.core.runtime.config.Mandatory;
  * 
  * @author Falko Bräutigam
  */
-public class FeatureStyleEditorInput
+public class RasterStyleEditorInput
         extends StyleEditorInput {
 
     @Mandatory
     @Immutable
-    public Config<FeatureType>  featureType;
+    public Config<GridCoverage2DReader> gridCoverageReader;
 
     @Mandatory
     @Immutable
-    public Config<FeatureStore> featureStore;
+    public Config<GridCoverage2D>       gridCoverage;
 
 }

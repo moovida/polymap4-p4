@@ -12,27 +12,22 @@
  */
 package org.polymap.p4.style;
 
-import org.geotools.data.FeatureStore;
-import org.opengis.feature.type.FeatureType;
-
 import org.polymap.core.runtime.config.Config;
+import org.polymap.core.runtime.config.Configurable;
 import org.polymap.core.runtime.config.Immutable;
 import org.polymap.core.runtime.config.Mandatory;
 
 /**
  * Container to transport relevant data to the {@link StyleEditor}.
  * 
+ * @author Steffen Stundzig
  * @author Falko Bräutigam
  */
-public class FeatureStyleEditorInput
-        extends StyleEditorInput {
+public abstract class StyleEditorInput
+        extends Configurable {
 
     @Mandatory
     @Immutable
-    public Config<FeatureType>  featureType;
-
-    @Mandatory
-    @Immutable
-    public Config<FeatureStore> featureStore;
+    public Config<String>       styleIdentifier;
 
 }

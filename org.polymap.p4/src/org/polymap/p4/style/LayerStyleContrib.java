@@ -67,7 +67,11 @@ public class LayerStyleContrib
             
             featureLayer.ifPresent( fs -> {
                 try {
-                    editorInput.set( new FeatureStyleEditorInput( fs.layer().styleIdentifier.get(), fs.featureSource() ) );
+                    editorInput.set( new FeatureStyleEditorInput() ); 
+                    editorInput.get().styleIdentifier.set( fs.layer().styleIdentifier.get() ); 
+                    editorInput.get().featureStore.set( fs.featureSource() );
+                    editorInput.get().featureType.set( fs.featureSource().getSchema() );
+
                     item = new ActionItem( toolbar );
                     item.text.set( "" );
                     item.icon.set( P4Plugin.images().svgImage("palette.svg", P4Plugin.TOOLBAR_ICON_CONFIG ) );

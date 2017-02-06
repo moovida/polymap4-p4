@@ -21,12 +21,15 @@ import org.eclipse.jface.viewers.CellLabelProvider;
 import org.eclipse.jface.viewers.ViewerCell;
 
 import org.polymap.core.style.model.FeatureStyle;
-import org.polymap.core.style.model.LineStyle;
-import org.polymap.core.style.model.PointStyle;
-import org.polymap.core.style.model.PolygonStyle;
 import org.polymap.core.style.model.Style;
 import org.polymap.core.style.model.StyleGroup;
-import org.polymap.core.style.model.TextStyle;
+import org.polymap.core.style.model.feature.LineStyle;
+import org.polymap.core.style.model.feature.PointStyle;
+import org.polymap.core.style.model.feature.PolygonStyle;
+import org.polymap.core.style.model.feature.TextStyle;
+import org.polymap.core.style.model.raster.RasterColorMapStyle;
+import org.polymap.core.style.model.raster.RasterGrayStyle;
+import org.polymap.core.style.model.raster.RasterRGBStyle;
 
 import org.polymap.rhei.batik.toolkit.md.MdToolkit;
 
@@ -85,6 +88,18 @@ public class FeatureStyleLabelProvider
         else if (cell.getElement() instanceof LineStyle) {
             cell.setText( title != null ? title : "Line" );
             cell.setImage( P4Plugin.images().svgImage( "vector-polyline.svg", P4Plugin.TOOLBAR_ICON_CONFIG ) );
+        }
+        else if (cell.getElement() instanceof RasterGrayStyle) {
+            cell.setText( title != null ? title : "Grayscale" );
+            //cell.setImage( P4Plugin.images().svgImage( "vector-polyline.svg", P4Plugin.TOOLBAR_ICON_CONFIG ) );
+        }
+        else if (cell.getElement() instanceof RasterRGBStyle) {
+            cell.setText( title != null ? title : "RGB" );
+            //cell.setImage( P4Plugin.images().svgImage( "vector-polyline.svg", P4Plugin.TOOLBAR_ICON_CONFIG ) );
+        }
+        else if (cell.getElement() instanceof RasterColorMapStyle) {
+            cell.setText( title != null ? title : "ColorMap" );
+            //cell.setImage( P4Plugin.images().svgImage( "vector-polyline.svg", P4Plugin.TOOLBAR_ICON_CONFIG ) );
         }
     }
     

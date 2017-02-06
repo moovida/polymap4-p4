@@ -30,10 +30,10 @@ import org.polymap.p4.P4Plugin;
  *
  * @author <a href="http://www.polymap.de">Falko Bräutigam</a>
  */
-public abstract class FeatureStyleEditor
-        extends StyleEditor<FeatureStyleEditorInput> {
+public abstract class RasterStyleEditor
+        extends StyleEditor<RasterStyleEditorInput> {
 
-    public FeatureStyleEditor( FeatureStyleEditorInput editorInput ) {
+    public RasterStyleEditor( RasterStyleEditorInput editorInput ) {
         super( editorInput );
     }
 
@@ -42,10 +42,9 @@ public abstract class FeatureStyleEditor
         super.createContents( parent, tk );
         
         // toolbar
-        new AddTextItem( toolbar );
-        new AddPointItem( toolbar );
-        new AddPolygonItem( toolbar );
-        new AddLineItem( toolbar );
+        new AddGrayscaleItem( toolbar );
+        new AddRGBItem( toolbar );
+        new AddColorMapItem( toolbar );
     }
     
     
@@ -53,8 +52,7 @@ public abstract class FeatureStyleEditor
     protected StylePropertyFieldSite createFieldSite( Property<StylePropertyValue> prop ) {
         StylePropertyFieldSite fieldSite = new StylePropertyFieldSite();
         fieldSite.prop.set( prop );
-        fieldSite.featureStore.set( editorInput.featureStore.get() );
-        fieldSite.featureType.set( editorInput.featureType.get() );
+        fieldSite.gridCoverage.set( editorInput.gridCoverage.get() );
         return fieldSite;
     }
 
@@ -62,70 +60,49 @@ public abstract class FeatureStyleEditor
     /**
      * 
      */
-    protected class AddPointItem
+    protected class AddGrayscaleItem
             extends ActionItem {
 
-        public AddPointItem( ItemContainer container ) {
+        public AddGrayscaleItem( ItemContainer container ) {
             super( container );
-            icon.set( P4Plugin.images().svgImage( "map-marker.svg", P4Plugin.TOOLBAR_ICON_CONFIG ) );
-            tooltip.set( "Create a new Point/Marker render description" );
+            icon.set( P4Plugin.images().svgImage( "grid2.svg", P4Plugin.TOOLBAR_ICON_CONFIG ) );
+            tooltip.set( "Create a new Grayscale style" );
             action.set( ev -> {
-                DefaultStyle.fillPointStyle( featureStyle );
+                DefaultStyle.fillGrayscaleStyle( featureStyle, editorInput.gridCoverage.get() );
                 list.refresh( true );
             });
         }
     }
 
-    
     /**
      * 
      */
-    protected class AddPolygonItem
+    protected class AddRGBItem
             extends ActionItem {
 
-        public AddPolygonItem( ItemContainer container ) {
+        public AddRGBItem( ItemContainer container ) {
             super( container );
-            icon.set( P4Plugin.images().svgImage( "vector-polygon.svg", P4Plugin.TOOLBAR_ICON_CONFIG ) );
-            tooltip.set( "Create a new Polygon render description" );
+            icon.set( P4Plugin.images().svgImage( "grid2.svg", P4Plugin.TOOLBAR_ICON_CONFIG ) );
+            tooltip.set( "Create a new RGB style" );
             action.set( ev -> {
-                DefaultStyle.fillPolygonStyle( featureStyle );
+                DefaultStyle.fillRGBStyle( featureStyle, editorInput.gridCoverage.get() );
                 list.refresh( true );
-            } );
+            });
         }
     }
 
-
     /**
      * 
      */
-    protected class AddLineItem
+    protected class AddColorMapItem
             extends ActionItem {
 
-        public AddLineItem( ItemContainer container ) {
+        public AddColorMapItem( ItemContainer container ) {
             super( container );
-            icon.set( P4Plugin.images().svgImage( "vector-polyline.svg", P4Plugin.TOOLBAR_ICON_CONFIG ) );
-            tooltip.set( "Create a new Line render description" );
+            icon.set( P4Plugin.images().svgImage( "grid2.svg", P4Plugin.TOOLBAR_ICON_CONFIG ) );
+            tooltip.set( "Create a ColorMap style" );
             action.set( ev -> {
-                DefaultStyle.fillLineStyle( featureStyle );
-                list.refresh( true );
-            } );
-        }
-    }
-
-
-    /**
-     * 
-     */
-    protected class AddTextItem
-            extends ActionItem {
-
-        public AddTextItem( ItemContainer container ) {
-            super( container );
-            // XXX we need a text icon here
-            icon.set( P4Plugin.images().svgImage( "format-title.svg", P4Plugin.TOOLBAR_ICON_CONFIG ) );
-            tooltip.set( "Create a new Text render description" );
-            action.set( ev -> {
-                DefaultStyle.fillTextStyle( featureStyle, editorInput.featureType.get() );
+                DefaultStyle.fillColorMapStyle( featureStyle, editorInput.gridCoverage.get() );
                 list.refresh( true );
             });
         }
