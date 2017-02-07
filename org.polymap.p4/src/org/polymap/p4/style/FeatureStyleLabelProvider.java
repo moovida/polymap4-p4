@@ -98,7 +98,7 @@ public class FeatureStyleLabelProvider
             //cell.setImage( P4Plugin.images().svgImage( "vector-polyline.svg", P4Plugin.TOOLBAR_ICON_CONFIG ) );
         }
         else if (cell.getElement() instanceof RasterColorMapStyle) {
-            cell.setText( title != null ? title : "ColorMap" );
+            cell.setText( title != null ? title : "Color map" );
             //cell.setImage( P4Plugin.images().svgImage( "vector-polyline.svg", P4Plugin.TOOLBAR_ICON_CONFIG ) );
         }
     }
