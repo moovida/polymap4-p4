@@ -15,15 +15,16 @@
 package org.polymap.p4.style;
 
 import org.eclipse.swt.widgets.Composite;
+
 import org.polymap.core.style.DefaultStyle;
 import org.polymap.core.style.model.StylePropertyValue;
 import org.polymap.core.style.ui.StylePropertyFieldSite;
+
 import org.polymap.rhei.batik.toolkit.ActionItem;
 import org.polymap.rhei.batik.toolkit.ItemContainer;
 import org.polymap.rhei.batik.toolkit.md.MdToolkit;
 
 import org.polymap.model2.Property;
-import org.polymap.p4.P4Plugin;
 
 /**
  * 
@@ -65,8 +66,9 @@ public abstract class RasterStyleEditor
 
         public AddGrayscaleItem( ItemContainer container ) {
             super( container );
-            icon.set( P4Plugin.images().svgImage( "grid2.svg", P4Plugin.TOOLBAR_ICON_CONFIG ) );
-            tooltip.set( "Create a new Grayscale style" );
+            text.set( "Grayscale" );
+            //icon.set( P4Plugin.images().svgImage( "grid2.svg", P4Plugin.TOOLBAR_ICON_CONFIG ) );
+            tooltip.set( "Add a new Grayscale style" );
             action.set( ev -> {
                 DefaultStyle.fillGrayscaleStyle( featureStyle, editorInput.gridCoverage.get() );
                 list.refresh( true );
@@ -82,8 +84,9 @@ public abstract class RasterStyleEditor
 
         public AddRGBItem( ItemContainer container ) {
             super( container );
-            icon.set( P4Plugin.images().svgImage( "grid2.svg", P4Plugin.TOOLBAR_ICON_CONFIG ) );
-            tooltip.set( "Create a new RGB style" );
+            text.set( "RGB" );
+            //icon.set( P4Plugin.images().svgImage( "grid2.svg", P4Plugin.TOOLBAR_ICON_CONFIG ) );
+            tooltip.set( "Add a new RGB style" );
             action.set( ev -> {
                 DefaultStyle.fillRGBStyle( featureStyle, editorInput.gridCoverage.get() );
                 list.refresh( true );
@@ -99,8 +102,9 @@ public abstract class RasterStyleEditor
 
         public AddColorMapItem( ItemContainer container ) {
             super( container );
-            icon.set( P4Plugin.images().svgImage( "grid2.svg", P4Plugin.TOOLBAR_ICON_CONFIG ) );
-            tooltip.set( "Create a ColorMap style" );
+            text.set( "ColorMap" );
+            //icon.set( P4Plugin.images().svgImage( "grid2.svg", P4Plugin.TOOLBAR_ICON_CONFIG ) );
+            tooltip.set( "Add a new ColorMap style" );
             action.set( ev -> {
                 DefaultStyle.fillColorMapStyle( featureStyle, editorInput.gridCoverage.get() );
                 list.refresh( true );
