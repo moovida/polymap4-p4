@@ -15,7 +15,6 @@
 package org.polymap.p4.style;
 
 import static org.apache.commons.lang3.StringUtils.defaultString;
-import static org.polymap.core.runtime.UIThreadExecutor.async;
 import static org.polymap.core.runtime.event.TypeEventFilter.ifType;
 import static org.polymap.core.ui.FormDataFactory.on;
 
@@ -42,6 +41,7 @@ import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.ui.forms.widgets.ExpandableComposite;
 import org.eclipse.ui.forms.widgets.Section;
 
+import org.polymap.core.runtime.UIThreadExecutor;
 import org.polymap.core.runtime.event.EventHandler;
 import org.polymap.core.runtime.event.EventManager;
 import org.polymap.core.runtime.i18n.IMessages;
@@ -164,7 +164,10 @@ public abstract class StyleEditor<I extends StyleEditorInput> {
         list.setInput( featureStyle );
         list.expandAll();
         if (!featureStyle.members().isEmpty()) {
-            async( () -> list.setSelection( new StructuredSelection( featureStyle.members().iterator().next() ) ) );
+            UIThreadExecutor.async( () -> {
+                Style first = featureStyle.members().iterator().next();
+                list.setSelection( new StructuredSelection( first ) );
+            });
         }
         
         //
@@ -226,10 +229,9 @@ public abstract class StyleEditor<I extends StyleEditorInput> {
 
         fields.clear();
         createEditorFields( parent, style, 0 );
-        parent.layout( true, true );
-        //parent.getParent().getParent().getParent().layout( true, true );
-        
-       // site().layout( true );
+
+        // panel body(?)
+        parent.getParent().getParent().getParent().getParent().layout( true, true );
     }
 
     
