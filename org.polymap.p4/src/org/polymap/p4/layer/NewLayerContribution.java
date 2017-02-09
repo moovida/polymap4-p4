@@ -18,9 +18,11 @@ import static org.polymap.core.runtime.UIThreadExecutor.asyncFast;
 
 import java.util.function.Consumer;
 
-import java.io.IOException;
-
+import org.geotools.coverage.grid.GridCoverage2D;
+import org.geotools.coverage.grid.io.GridCoverage2DReader;
+import org.geotools.data.DataAccess;
 import org.geotools.data.FeatureSource;
+import org.geotools.feature.NameImpl;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -29,10 +31,11 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.widgets.Button;
 
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 
 import org.polymap.core.catalog.resolve.IResourceInfo;
-import org.polymap.core.data.util.NameImpl;
+import org.polymap.core.catalog.resolve.IServiceInfo;
 import org.polymap.core.operation.OperationSupport;
 import org.polymap.core.project.IMap;
 import org.polymap.core.style.DefaultStyle;
@@ -103,13 +106,23 @@ public class NewLayerContribution
     public static void createLayer( IResourceInfo res, IMap map, Consumer<IJobChangeEvent> finalizer ) {
         // create default style
         // XXX 86: [Style] Default style (http://github.com/Polymap4/polymap4-p4/issues/issue/86
-        // see AddLayerOperationConcern
+        // see AddLayerOperationConcern        
         FeatureStyle featureStyle = P4Plugin.styleRepo().newFeatureStyle();
         try {
-            FeatureSource fs = P4Plugin.localCatalog().localFeaturesStore().getFeatureSource( new NameImpl( res.getName() ) );
-            DefaultStyle.create( featureStyle, fs.getSchema() );
+            IServiceInfo serviceInfo = res.getServiceInfo();
+            Object service = serviceInfo.createService( new NullProgressMonitor() );
+            // features
+            if (service instanceof DataAccess) {
+                FeatureSource fs = ((DataAccess)service).getFeatureSource( new NameImpl( res.getName() ) );
+                DefaultStyle.create( featureStyle, fs.getSchema() );                
+            }
+            // raster
+            else if (service instanceof GridCoverage2DReader) {
+                GridCoverage2D grid = ((GridCoverage2DReader)service).read( res.getName(), null );
+                DefaultStyle.fillGrayscaleStyle( featureStyle, grid );
+            }            
         }
-        catch (IOException e) {
+        catch (Exception e) {
             DefaultStyle.createAllStyles( featureStyle );
         }
         
