@@ -84,7 +84,7 @@ class ImportsContentProvider
     
     @EventHandler( display=true )
     protected void contentChanged( EventObject ev ) {
-        log.info( "Remove cache for: " + ev.getSource().getClass().getSimpleName() );
+        log.debug( "Remove cache for: " + ev.getSource().getClass().getSimpleName() );
         cache.remove( ev.getSource() );
         
         // new contextIn (root) or prompt (child) -> structural change 

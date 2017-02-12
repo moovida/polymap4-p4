@@ -24,7 +24,6 @@ import java.io.StringWriter;
 
 import org.geotools.coverage.grid.io.GridCoverage2DReader;
 import org.geotools.data.ServiceInfo;
-import org.geotools.gce.geotiff.GeoTiffReader;
 import org.geotools.geometry.GeneralEnvelope;
 import org.geotools.referencing.CRS;
 
@@ -40,6 +39,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.rap.rwt.RWT;
 
 import org.polymap.core.catalog.IUpdateableMetadataCatalog.Updater;
+import org.polymap.core.data.raster.GridCoverageReaderFactory;
 import org.polymap.core.data.raster.catalog.GridServiceResolver;
 import org.polymap.core.runtime.UIThreadExecutor;
 import org.polymap.core.runtime.i18n.IMessages;
@@ -124,18 +124,18 @@ public class RasterImporter
             log.info( "File size: " + FileUtils.sizeOf( main ) );
 
             try {
-                grid = new GeoTiffReader( main );
+                grid = GridCoverageReaderFactory.openGeoTiff( main );
             }
             catch (Exception e) {
                 try {
                     // translate to GeoTiff
                     main = GdalTransformer.translate( main, monitor );
-                    grid = new GeoTiffReader( main );
+                    grid = GridCoverageReaderFactory.openGeoTiff( main );
                 }
                 catch (Exception e1) {
                     // last resort: warp to EPSG:3857
                     main = GdalTransformer.warp( main, "EPSG:3857", monitor );
-                    grid = new GeoTiffReader( main );
+                    grid = GridCoverageReaderFactory.openGeoTiff( main );
                 }
             }
             log.info( "reader: " + grid );
