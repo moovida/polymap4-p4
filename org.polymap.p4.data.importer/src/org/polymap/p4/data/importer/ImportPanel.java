@@ -71,6 +71,7 @@ import org.polymap.core.ui.UIUtils;
 
 import org.polymap.rhei.batik.Context;
 import org.polymap.rhei.batik.PanelIdentifier;
+import org.polymap.rhei.batik.app.SvgImageRegistryHelper;
 import org.polymap.rhei.batik.toolkit.IPanelSection;
 import org.polymap.rhei.batik.toolkit.SimpleDialog;
 import org.polymap.rhei.batik.toolkit.Snackbar.Appearance;
@@ -132,7 +133,7 @@ public class ImportPanel
                         || parent instanceof ProjectMapPanel )
                 .map( parent -> {
                     site().title.set( "" );
-                    site().tooltip.set( "Import new data into this project" );
+                    site().tooltip.set( i18n.get( "tooltip" ) );
                     site().icon.set( ImporterPlugin.images().svgImage( "database-plus.svg", P4Plugin.HEADER_ICON_CONFIG ) );
                     return true;
                 } )
@@ -144,7 +145,7 @@ public class ImportPanel
     public void init() {
         super.init();
         site().setSize( SIDE_PANEL_WIDTH, SIDE_PANEL_WIDTH2, Integer.MAX_VALUE );
-        site().title.set( "Import" );
+        site().title.set( i18n.get( "title" ) );
         context = nextContext.isPresent() ? nextContext.get() : new ImporterContext(); 
 
         // listen to ok (to execute) event from ImporterSite
@@ -183,9 +184,9 @@ public class ImportPanel
         if (!nextContext.isPresent()) {
             upload = tk.adapt( new Upload( parent, SWT.FLAT ) ); //, Upload.SHOW_PROGRESS ) );
             upload.setBackground( parent.getBackground() );
-            upload.setImage( ImporterPlugin.images().svgImage( "upload.svg", WHITE24 ) );
-            upload.setText( "Upload file..." );
-            upload.setToolTipText( "<b>Drop</b> files here<br/>or <b>click</b> to open file dialog" );
+            upload.setImage( ImporterPlugin.images().svgImage( "upload.svg", SvgImageRegistryHelper.ACTION24 ) );
+            upload.setText( i18n.get( "upload" ) );
+            upload.setToolTipText( i18n.get( "uploadTooltip" ) );
             upload.setHandler( this );
             upload.moveAbove( null );
 
@@ -225,14 +226,12 @@ public class ImportPanel
         importsList.setInput( context );
         
         // result viewer
-        resultSection = tk.createPanelSection( parent, "Data preview", SWT.BORDER );
+        resultSection = tk.createPanelSection( parent, i18n.get( "previewTitle" ), SWT.BORDER );
         if (!nextContext.isPresent()) {
-            tk.createFlowText( resultSection.getBody(), "No data to preview yet.\n\n" +
-                    "Please upload a **data file** (CSV, MS Excel, Shapefile, KML/KMZ, GeoJSON) or an **archive** (ZIP, TAR, TGZ). " +
-                    "Or choose one of the **service** importers.");
+            tk.createFlowText( resultSection.getBody(), i18n.get( "previewMsg" ) );
         }
         else {
-            tk.createFlowText( resultSection.getBody(), "No valid data to import found.\n\n" );
+            tk.createFlowText( resultSection.getBody(), i18n.get( "previewNoData" ) );
         }
         
         // layout
@@ -246,7 +245,7 @@ public class ImportPanel
 
 
     protected void createResultViewer( @SuppressWarnings("hiding") ImporterContext context ) {
-        resultSection.setTitle( "Data preview" );
+        resultSection.setTitle( i18n.get( "previewTitle" ) );
         context.updateResultViewer( resultSection.getBody(), site().toolkit() );
     }
     
@@ -260,11 +259,11 @@ public class ImportPanel
             MdToolkit tk = (MdToolkit)site().toolkit();
             if (context.site().terminal.get()) {
                 fab = tk.createFab( SWT.RIGHT );
-                fab.setToolTipText( "Import data" );
+                fab.setToolTipText( i18n.get( "fabTooltip" ) );
             }
             else {
                 fab = tk.createFab( null, ImporterPlugin.images().svgImage( "arrow-right.svg", WHITE24 ), SWT.RIGHT );
-                fab.setToolTipText( "Send these data to the next stage" );
+                fab.setToolTipText( i18n.get( "forwardTooltip" ) );
             }
             fab.getParent().layout();
             

@@ -148,7 +148,7 @@ public class ShpImporter
                 .map( prjFile -> {
                     try {
                         // encoding used in geotools' PrjFileReader
-                        String wkt = FileUtils.readFileToString( prjFile, Charset.forName( "ISO-8859-1" ) );
+                        String wkt = FileUtils.readFileToString( prjFile, /*Charset.forName(*/ "ISO-8859-1" );
                         CRSFactory factory = ReferencingFactoryFinder.getCRSFactory( null );
                         CoordinateReferenceSystem result = factory.createFromWKT( wkt );
                         return result;

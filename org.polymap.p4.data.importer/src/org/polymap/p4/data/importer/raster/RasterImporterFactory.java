@@ -17,11 +17,14 @@ package org.polymap.p4.data.importer.raster;
 import static java.util.Collections.singletonList;
 
 import java.util.List;
+
 import java.io.File;
 
 import org.apache.commons.io.FilenameUtils;
 
 import com.google.common.collect.Lists;
+
+import org.eclipse.core.runtime.NullProgressMonitor;
 
 import org.polymap.p4.data.importer.ContextIn;
 import org.polymap.p4.data.importer.ImporterFactory;
@@ -34,7 +37,7 @@ import org.polymap.p4.data.importer.ImporterFactory;
 public class RasterImporterFactory
         implements ImporterFactory {
 
-    public static final List<String> SUPPORTED_EXTS = Lists.newArrayList( "geotiff", "tiff", "tif", /*"tfw", "wld",*/ "asc", "adf" );
+    public static final List<String> SUPPORTED_EXTS = Lists.newArrayList( "geotiff", "tiff", "tif" /*"tfw", "wld", "asc", "adf"*/ );
     
     @ContextIn
     protected File                  file;
@@ -60,7 +63,8 @@ public class RasterImporterFactory
     
     protected static boolean isSupported( File f ) {
         String ext = FilenameUtils.getExtension( f.getName() );
-        return SUPPORTED_EXTS.contains( ext.toLowerCase() );
+        return SUPPORTED_EXTS.contains( ext.toLowerCase() ) 
+                || GdalTransformer.isSupported( f, new NullProgressMonitor() );
     }
     
 }
