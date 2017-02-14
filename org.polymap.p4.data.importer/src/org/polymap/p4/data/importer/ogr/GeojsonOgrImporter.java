@@ -14,6 +14,8 @@
  */
 package org.polymap.p4.data.importer.ogr;
 
+import java.util.NoSuchElementException;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -22,15 +24,15 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.geotools.data.store.MaxFeaturesFeatureCollection;
+import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
-import org.geotools.feature.collection.BaseFeatureCollection;
+import org.geotools.feature.collection.BaseSimpleFeatureCollection;
 import org.geotools.geojson.feature.FeatureJSON;
 import org.opengis.feature.Feature;
 import org.opengis.feature.GeometryAttribute;
+import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.FeatureType;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -54,6 +56,7 @@ import org.polymap.p4.data.importer.Importer;
 import org.polymap.p4.data.importer.ImporterPlugin;
 import org.polymap.p4.data.importer.ImporterSite;
 import org.polymap.p4.data.importer.Messages;
+import org.polymap.p4.data.importer.prompts.CrsPrompt;
 import org.polymap.p4.data.importer.prompts.SchemaNamePrompt;
 import org.polymap.p4.data.importer.shapefile.ShpFeatureTableViewer;
 
@@ -81,6 +84,8 @@ public class GeojsonOgrImporter
 
     private SchemaNamePrompt    schemaNamePrompt;
 
+    private CrsPrompt           crsPrompt;
+
     
     @Override
     public void init( ImporterSite newSite, IProgressMonitor monitor ) throws Exception {
@@ -99,6 +104,7 @@ public class GeojsonOgrImporter
 
     @Override
     public void createPrompts( IProgressMonitor monitor ) throws Exception {
+        //crsPrompt = new CrsPrompt( site, defaultCrs() );        
         schemaNamePrompt = new SchemaNamePrompt( site, FilenameUtils.getBaseName( f.getName() ) );
     }
 
@@ -107,7 +113,7 @@ public class GeojsonOgrImporter
     public void verify( IProgressMonitor monitor ) {
         try {
             // translate to json
-            monitor.beginTask( "Verify", 2 );
+            monitor.beginTask( "Verify", 4 );
             File json = GeojsonOgrTransformer.translate( f, new SubMonitor( monitor, 1 ) );
             
             // XXX check SRS style
@@ -123,12 +129,16 @@ public class GeojsonOgrImporter
                     writer.write( replaced );
                 }
             }
-            
+            monitor.worked( 1 );
+                        
+            monitor.subTask( "reading schema" );
             features = new JsonFeatureCollection( json2 );
+            log.info( "Features: " + features.size() + " : " + features.getSchema() );
+            monitor.worked( 1 );
             
             // checking geometries
             SubMonitor submon = new SubMonitor( monitor, 1 );
-            submon.beginTask( "Checking all features", IProgressMonitor.UNKNOWN );
+            submon.beginTask( "checking all features", IProgressMonitor.UNKNOWN );
             try (
                 FeatureIterator it = features.features();
             ){
@@ -136,8 +146,11 @@ public class GeojsonOgrImporter
                     Feature feature = it.next();
                     // geometry
                     GeometryAttribute geom = feature.getDefaultGeometryProperty();
-                    if (geom == null || geom.getValue() == null) {
+                    if (geom != null && geom.getValue() == null) {
                         throw new RuntimeException( "Feature has no geometry: " + feature.getIdentifier().getID() );
+                    }
+                    else {
+                        log.info( "Geometry: " + geom.getValue() );
                     }
                     // other checks...?
                     monitor.worked( 1 );
@@ -162,7 +175,6 @@ public class GeojsonOgrImporter
         else {
             try {
                 SimpleFeatureType schema = (SimpleFeatureType)features.getSchema();
-                //log.info( "Features: " + features.size() + " : " + schema.getTypeName() );
                 // tk.createFlowText( parent, "Features: *" + features.size() + "*" );
                 
                 ShpFeatureTableViewer table = new ShpFeatureTableViewer( parent, schema );
@@ -170,7 +182,7 @@ public class GeojsonOgrImporter
                 
                 // XXX GeoTools shapefile impl does not handle setFirstResult() well
                 // so we can just display 100 features :(
-                MaxFeaturesFeatureCollection content = new MaxFeaturesFeatureCollection( features, 100 );
+                FeatureCollection content = features;  //new MaxFeaturesFeatureCollection( features, 100 );
                 table.setInput( content );
             }
             catch (Exception e) {
@@ -193,19 +205,24 @@ public class GeojsonOgrImporter
      * 
      */
     class JsonFeatureCollection
-            extends BaseFeatureCollection
-            implements FeatureCollection {
+            extends BaseSimpleFeatureCollection {
 
-        private File        json;
+        private File                json;
+        
+        private FeatureJSON         featureJSON;
+        
         
         public JsonFeatureCollection( File json ) {
+            super( null );
             this.json = json;
-        }
 
-        @Override
-        public FeatureIterator features() {
+            featureJSON = new FeatureJSON();
+            featureJSON.setEncodeFeatureCRS( false );
+            featureJSON.setEncodeNullValues( true );
+
             try {
-                return new FeatureJSON().streamFeatureCollection( json );
+                schema = featureJSON.readFeatureCollectionSchema( json, false );
+                featureJSON.setFeatureType( schema );
             }
             catch (IOException e) {
                 throw new RuntimeException( e );
@@ -213,9 +230,24 @@ public class GeojsonOgrImporter
         }
 
         @Override
-        public FeatureType getSchema() {
+        public SimpleFeatureIterator features() {
             try {
-                return new FeatureJSON().readFeatureCollectionSchema( json, false );
+                // XXX I don't grok all this simple-whatever type voodoo of geotools, really :(
+                FeatureIterator<SimpleFeature> result = featureJSON.streamFeatureCollection( json );
+                return new SimpleFeatureIterator() {
+                    @Override
+                    public SimpleFeature next() throws NoSuchElementException {
+                        return result.next();
+                    }
+                    @Override
+                    public boolean hasNext() {
+                        return result.hasNext();
+                    }
+                    @Override
+                    public void close() {
+                        result.close();
+                    }
+                };
             }
             catch (IOException e) {
                 throw new RuntimeException( e );

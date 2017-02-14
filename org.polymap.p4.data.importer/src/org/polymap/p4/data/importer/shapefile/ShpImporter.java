@@ -178,7 +178,7 @@ public class ShpImporter
             
             fs = ds.getFeatureSource();
             
-            // check all features
+            // sanity check all features
             ContentFeatureCollection results = fs.getFeatures();
             monitor.beginTask( "Checking all features", results.size() );
             try (
