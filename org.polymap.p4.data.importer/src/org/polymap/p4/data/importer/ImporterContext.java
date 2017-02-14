@@ -16,6 +16,7 @@ package org.polymap.p4.data.importer;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toMap;
 import static org.polymap.core.runtime.UIThreadExecutor.asyncFast;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EventObject;
@@ -36,6 +37,7 @@ import com.google.common.collect.ImmutableList;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
+
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
@@ -87,7 +89,9 @@ public class ImporterContext
             DownloadImporterFactory.class,
             WmsImporterFactory.class, 
             WfsImporterFactory.class,
-            RasterImporterFactory.class };
+            RasterImporterFactory.class,
+            // OgrImporterFactory.class 
+            };
     
     private Importer                        importer;
     

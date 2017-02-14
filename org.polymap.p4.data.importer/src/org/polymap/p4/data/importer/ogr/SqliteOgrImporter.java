@@ -14,26 +14,23 @@
  */
 package org.polymap.p4.data.importer.ogr;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
+import java.util.HashMap;
+import java.util.Map;
+
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 
+import org.geotools.data.DataStore;
+import org.geotools.data.DataStoreFinder;
+import org.geotools.data.FeatureSource;
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.geotools.data.store.MaxFeaturesFeatureCollection;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
-import org.geotools.feature.collection.BaseFeatureCollection;
-import org.geotools.geojson.feature.FeatureJSON;
 import org.opengis.feature.Feature;
 import org.opengis.feature.GeometryAttribute;
 import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.FeatureType;
 
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -58,14 +55,19 @@ import org.polymap.p4.data.importer.prompts.SchemaNamePrompt;
 import org.polymap.p4.data.importer.shapefile.ShpFeatureTableViewer;
 
 /**
- * 
+ * Uses SQLite/Spatialite as intermediate format.
+ * <p/>
+ * TODO<ul>
+ * <li>download/load proper libgeos/libproj libreries</li>
+ * <li>database version: table 'type' is missing</li>
+ * </ul> 
  *
  * @author Falko Bräutigam
  */
-public class OgrImporter
+public class SqliteOgrImporter
         implements Importer {
 
-    private static final Log log = LogFactory.getLog( OgrImporter.class );
+    private static final Log log = LogFactory.getLog( SqliteOgrImporter.class );
     
     private static final IMessages i18n = Messages.forPrefix( "ImporterOgr" );
 
@@ -76,6 +78,12 @@ public class OgrImporter
 
     @ContextOut
     private FeatureCollection   features;
+    
+    /** The DataStore of {@link #fs}. */
+    private DataStore           ds;
+    
+    /** The FeatureSource of the {@link #features}. */
+    private FeatureSource       fs;
 
     private Exception           exc;
 
@@ -107,30 +115,29 @@ public class OgrImporter
     public void verify( IProgressMonitor monitor ) {
         try {
             // translate to json
-            monitor.beginTask( "Verify", 2 );
-            File json = OgrTransformer.translate( f, new SubMonitor( monitor, 1 ) );
+            monitor.beginTask( "Verify", 3 );
+            File temp = SqliteOgrTransformer.translate( f, new SubMonitor( monitor, 1 ) );
             
-            // XXX check SRS style
-            monitor.subTask( "checking SRS style" );
-            File json2 = new File( json.getParentFile(), json.getName() + ".srs-checked" );
-            try (
-                BufferedReader reader = new BufferedReader( new FileReader( json ) );
-                BufferedWriter writer = new BufferedWriter( new FileWriter( json2 ) );
-            ){
-                String line = null;
-                while ((line = reader.readLine()) != null) {
-                    String replaced = StringUtils.replace( line, "urn:ogc:def:crs:OGC:1.3:CRS84", "EPSG:4326" );
-                    writer.write( replaced );
-                }
-            }
+            monitor.subTask( "opening temp spatialite database" );            
+            System.load( "/home/falko/servers/spatialite-libs/libgeos-3.1.1.so" );
+            System.load( "/home/falko/servers/spatialite-libs/libgeos_c.so.1.6.0" );
+            System.load( "/home/falko/servers/spatialite-libs/libproj.so.0.5.5" );
             
-            features = new JsonFeatureCollection( json2 );
+            Map<String,Object> params = new HashMap();
+            params.put( "dbtype" /*SpatiaLiteDataStoreFactory.DBTYPE.key*/, "spatiali te" /*SpatiaLiteDataStoreFactory.DBTYPE.sample*/ );
+            params.put( "database" /*SpatiaLiteDataStoreFactory.DATABASE.key*/, temp.getAbsolutePath() );
+            ds = DataStoreFinder.getDataStore(params);  //dsf.createDataStore( params );
+            log.info( "columns: " + ds.getNames() );
+            String name = FilenameUtils.getBaseName( f.getName() );
+            fs = ds.getFeatureSource( name );
+            monitor.worked( 1 );
             
             // checking geometries
             SubMonitor submon = new SubMonitor( monitor, 1 );
-            submon.beginTask( "Checking all features", IProgressMonitor.UNKNOWN );
+            submon.beginTask( "checking all features", IProgressMonitor.UNKNOWN );
+            FeatureCollection results = fs.getFeatures();
             try (
-                FeatureIterator it = features.features();
+                FeatureIterator it = results.features();
             ){
                 while (it.hasNext()) {
                     Feature feature = it.next();
@@ -161,16 +168,15 @@ public class OgrImporter
         }
         else {
             try {
-                SimpleFeatureType schema = (SimpleFeatureType)features.getSchema();
-                //log.info( "Features: " + features.size() + " : " + schema.getTypeName() );
-                // tk.createFlowText( parent, "Features: *" + features.size() + "*" );
-                
+                SimpleFeatureType schema = (SimpleFeatureType)fs.getSchema();
                 ShpFeatureTableViewer table = new ShpFeatureTableViewer( parent, schema );
                 table.setContentProvider( new FeatureCollectionContentProvider() );
                 
-                // XXX GeoTools shapefile impl does not handle setFirstResult() well
-                // so we can just display 100 features :(
-                MaxFeaturesFeatureCollection content = new MaxFeaturesFeatureCollection( features, 100 );
+//                // XXX GeoTools shapefile impl does not handle setFirstResult() well
+//                // so we can just display 100 features :(
+//                Query query = new Query();
+//                query.setMaxFeatures( 1000 );
+                FeatureCollection content = fs.getFeatures();
                 table.setInput( content );
             }
             catch (Exception e) {
@@ -185,42 +191,8 @@ public class OgrImporter
 
     @Override
     public void execute( IProgressMonitor monitor ) throws Exception {
-        features = schemaNamePrompt.retypeFeatures( (SimpleFeatureCollection)features, f.getName() );
-    }
-    
-
-    /**
-     * 
-     */
-    class JsonFeatureCollection
-            extends BaseFeatureCollection
-            implements FeatureCollection {
-
-        private File        json;
-        
-        public JsonFeatureCollection( File json ) {
-            this.json = json;
-        }
-
-        @Override
-        public FeatureIterator features() {
-            try {
-                return new FeatureJSON().streamFeatureCollection( json );
-            }
-            catch (IOException e) {
-                throw new RuntimeException( e );
-            }
-        }
-
-        @Override
-        public FeatureType getSchema() {
-            try {
-                return new FeatureJSON().readFeatureCollectionSchema( json, false );
-            }
-            catch (IOException e) {
-                throw new RuntimeException( e );
-            }
-        }
+        FeatureCollection result = fs.getFeatures();
+        features = schemaNamePrompt.retypeFeatures( (SimpleFeatureCollection)result, f.getName() );
     }
     
 }

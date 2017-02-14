@@ -30,10 +30,10 @@ import org.polymap.p4.data.importer.raster.ExternalProgram;
  *
  * @author Falko Bräutigam
  */
-class OgrTransformer
+class SqliteOgrTransformer
         extends ExternalProgram {
 
-    private static final Log log = LogFactory.getLog( OgrTransformer.class );
+    private static final Log log = LogFactory.getLog( SqliteOgrTransformer.class );
     
     /**
      * 
@@ -60,9 +60,11 @@ class OgrTransformer
     public static File translate( File f, IProgressMonitor monitor ) throws IOException {
         monitor.beginTask( "transforming format", IProgressMonitor.UNKNOWN );
         File tempDir = ImportTempDir.create();
-        File temp = new File( tempDir, f.getName() + ".json" );
+        File temp = new File( tempDir, f.getName() + ".sqlite" );
 
-        String[] command = {"ogr2ogr", "-progress", "-preserve_fid", "-f", "GeoJSON", temp.getAbsolutePath(), f.getAbsolutePath()};
+        String[] command = {"ogr2ogr", "-dsco", "spatialite=yes", "-preserve_fid", "-f", "SQLite", 
+                temp.getAbsolutePath(), f.getAbsolutePath()};
+        
         return execute( command, monitor, (exitCode, out, err) -> {
             monitor.done();
             if (exitCode == 0 && !err.contains( "ERROR" )) {

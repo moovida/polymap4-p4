@@ -40,12 +40,12 @@ public class OgrImporterFactory
     @Override
     public void createImporters( ImporterBuilder builder ) throws Exception {
         if (file != null && isSupported( file )) {
-            builder.newImporter( new OgrImporter(), file );
+            builder.newImporter( new GeojsonOgrImporter(), file );
         }
         if (files != null) {
             for (File currentFile : files) {
                 if (isSupported( currentFile )) {
-                    builder.newImporter( new OgrImporter(), currentFile );
+                    builder.newImporter( new GeojsonOgrImporter(), currentFile );
                 }
             }
         }
@@ -53,7 +53,7 @@ public class OgrImporterFactory
 
 
     private boolean isSupported( File f ) {
-        return OgrTransformer.isSupported( f, new NullProgressMonitor() );
+        return GeojsonOgrTransformer.isSupported( f, new NullProgressMonitor() );
     }
     
 }
