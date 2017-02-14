@@ -44,6 +44,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+
 import org.polymap.core.catalog.IMetadata;
 import org.polymap.core.catalog.IUpdateableMetadataCatalog.Updater;
 import org.polymap.core.data.wms.catalog.WmsServiceResolver;
@@ -131,15 +132,13 @@ public class WmsImporter
                         final Label msg = on( tk.createLabel( parent, "" ) ).fill().top( text ).control();
 
                         text.addModifyListener( new ModifyListener() {
-
                             @Override
                             public void modifyText( ModifyEvent ev ) {
                                 url = text.getText();
                                 msg.setText( urlPattern.matcher( url ).matches() ? "Ok" : "Not a valid URL" );
                             }
-                        } );
+                        });
                     }
-
 
                     @Override
                     public void submit( ImporterPrompt prompt ) {
@@ -147,7 +146,7 @@ public class WmsImporter
                         urlPrompt.ok.set( urlPattern.matcher( url ).matches() );
                         urlPrompt.value.set( url );
                     }
-                } );
+                });
     }
 
 
@@ -160,7 +159,9 @@ public class WmsImporter
                 String title = capabilities.getService().getTitle();
                 log.info( "Service title: " + title );
 
-                if (P4Plugin.localCatalog().query( "", monitor ).execute().stream().filter( metadata -> metadata.getTitle().equals( title ) ).findAny().isPresent()) {
+                if (P4Plugin.localCatalog().query( "", monitor ).execute().stream()
+                        .filter( metadata -> metadata.getTitle().equals( title ) )
+                        .findAny().isPresent()) {
                     throw new Exception( i18n.get( "entryExists", title ) );
                 }
                 site.ok.set( true );
@@ -192,13 +193,11 @@ public class WmsImporter
             ColumnDataFactory.on( tk.createFlowText( content, i18n.get( "noUrl" ) ) ).widthHint( preferredWidth );
         }
         else {
-
             WMSCapabilities capabilities = wms.getCapabilities();
             OwsMetadata md = new OwsMetadata().markdown( capabilities.getService() ).markdown( capabilities.getLayerList() );
             ColumnDataFactory.on( tk.createFlowText( content, md.toString() ) ).widthHint( preferredWidth );
 
             UIJob job = new UIJob( "Load image preview" ) {
-
                 @Override
                 protected void runWithException( IProgressMonitor monitor ) throws Exception {
                     try {
@@ -281,9 +280,9 @@ public class WmsImporter
             dialog.addOkAction( () -> {
                 dialog.close();
                 return true;
-            } );
+            });
             dialog.open();
-        } );
+        });
     }
 
 
