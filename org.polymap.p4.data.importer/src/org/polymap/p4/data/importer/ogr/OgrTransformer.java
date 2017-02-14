@@ -12,10 +12,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  */
-package org.polymap.p4.data.importer.raster;
-
-import static org.apache.commons.io.FilenameUtils.getBaseName;
-import static org.apache.commons.lang3.StringUtils.substringAfterLast;
+package org.polymap.p4.data.importer.ogr;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,26 +21,26 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.NullProgressMonitor;
 
 import org.polymap.p4.data.importer.ImportTempDir;
+import org.polymap.p4.data.importer.raster.ExternalProgram;
 
 /**
  * 
  *
  * @author Falko Bräutigam
  */
-class GdalTransformer
+class OgrTransformer
         extends ExternalProgram {
 
-    private static final Log log = LogFactory.getLog( GdalTransformer.class );
+    private static final Log log = LogFactory.getLog( OgrTransformer.class );
     
     /**
      * 
      */
     public static boolean isSupported( File f, IProgressMonitor monitor ) {
         try {
-            String[] command = {"gdalinfo", f.getAbsolutePath()};
+            String[] command = {"ogrinfo", f.getAbsolutePath()};
             return execute( command, monitor, (exitCode, out, err) -> {
                 return exitCode == 0 && !err.contains( "ERROR" );
             });
@@ -57,15 +54,17 @@ class GdalTransformer
     
     /**
      * 
-     * @return A newly created File.
+     * @return A newly created GeoJSON file.
      * @throws IOException 
      */
     public static File translate( File f, IProgressMonitor monitor ) throws IOException {
+        monitor.beginTask( "transforming format", IProgressMonitor.UNKNOWN );
         File tempDir = ImportTempDir.create();
-        File temp = new File( tempDir, f.getName() + ".tif" );
+        File temp = new File( tempDir, f.getName() + ".json" );
 
-        String[] command = {"gdal_translate", f.getAbsolutePath(), temp.getAbsolutePath()};
+        String[] command = {"ogr2ogr", "-progress", "-preserve_fid", "-f", "GeoJSON", temp.getAbsolutePath(), f.getAbsolutePath()};
         return execute( command, monitor, (exitCode, out, err) -> {
+            monitor.done();
             if (exitCode == 0 && !err.contains( "ERROR" )) {
                 return temp;
             }
@@ -76,27 +75,19 @@ class GdalTransformer
     }
     
     
-    public static File warp( File f, String epsg, IProgressMonitor monitor ) throws IOException {
-        File tempDir = ImportTempDir.create();
-        File temp = new File( tempDir, getBaseName( f.getName() ) + "." + substringAfterLast( epsg, ":" ) + ".tif" );
+//    public static File warp( File f, String epsg, IProgressMonitor monitor ) throws IOException {
+//        File tempDir = ImportTempDir.create();
+//        File temp = new File( tempDir, getBaseName( f.getName() ) + "." + substringAfterLast( epsg, ":" ) + ".tif" );
+//
+//        String[] command = {"gdalwarp", "-t_srs", epsg, f.getAbsolutePath(), temp.getAbsolutePath()};
+//        return execute( command, monitor, (exitCode, out, err) -> {
+//            if (exitCode == 0 && !err.contains( "ERROR" )) {
+//                return temp;
+//            }
+//            else {
+//                throw new IOException( err );
+//            }
+//        });
+//    }
 
-        String[] command = {"gdalwarp", "-t_srs", epsg, f.getAbsolutePath(), temp.getAbsolutePath()};
-        return execute( command, monitor, (exitCode, out, err) -> {
-            if (exitCode == 0 && !err.contains( "ERROR" )) {
-                return temp;
-            }
-            else {
-                throw new IOException( err );
-            }
-        });
-    }
-
-
-    // Test ***********************************************
-    
-    public static final void main( String[] args ) {
-        File f = new File( "/home/falko/Data/ncrast/elevation.grd" );
-        log.info( "isSupported(): " + isSupported( f, new NullProgressMonitor() ) );
-    }
-    
 }
