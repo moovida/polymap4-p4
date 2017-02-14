@@ -28,6 +28,7 @@ import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.feature.collection.BaseSimpleFeatureCollection;
+import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geojson.feature.FeatureJSON;
 import org.opengis.feature.Feature;
 import org.opengis.feature.GeometryAttribute;
@@ -149,9 +150,6 @@ public class GeojsonOgrImporter
                     if (geom != null && geom.getValue() == null) {
                         throw new RuntimeException( "Feature has no geometry: " + feature.getIdentifier().getID() );
                     }
-                    else {
-                        log.info( "Geometry: " + geom.getValue() );
-                    }
                     // other checks...?
                     monitor.worked( 1 );
                 }
@@ -217,11 +215,17 @@ public class GeojsonOgrImporter
             this.json = json;
 
             featureJSON = new FeatureJSON();
-            featureJSON.setEncodeFeatureCRS( false );
+            featureJSON.setEncodeFeatureCRS( true );
             featureJSON.setEncodeNullValues( true );
 
             try {
-                schema = featureJSON.readFeatureCollectionSchema( json, false );
+                SimpleFeatureType namespace = featureJSON.readFeatureCollectionSchema( json, false );
+                SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
+                builder.init( namespace );
+                builder.setName( namespace.getName().getLocalPart() );
+                builder.setNamespaceURI( (String)null );
+                schema = builder.buildFeatureType();
+                
                 featureJSON.setFeatureType( schema );
             }
             catch (IOException e) {

@@ -32,6 +32,7 @@ import org.polymap.core.catalog.resolve.IResolvableInfo;
 import org.polymap.core.catalog.resolve.IResourceInfo;
 import org.polymap.core.data.rs.catalog.RServiceInfo;
 import org.polymap.core.operation.DefaultOperation;
+
 import org.polymap.p4.P4Plugin;
 import org.polymap.p4.data.importer.ImporterContext;
 
@@ -44,7 +45,7 @@ public class ImportFeaturesOperation
         extends DefaultOperation
         implements IUndoableOperation {
 
-    private static Log log = LogFactory.getLog( ImportFeaturesOperation.class );
+    private static final Log log = LogFactory.getLog( ImportFeaturesOperation.class );
     
     private ImporterContext         context;
 
@@ -87,6 +88,7 @@ public class ImportFeaturesOperation
 
         // XXX check namespace, remove when fixed
         if (schema.getName().getNamespaceURI() != null) {
+            //log.warn( "RDataStore does not handle namespace properly: " + schema.getName() );
             throw new RuntimeException( "RDataStore does not handle namespace properly: " + schema.getName() );
         }
         

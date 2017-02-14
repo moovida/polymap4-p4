@@ -62,7 +62,7 @@ class GeojsonOgrTransformer
         File tempDir = ImportTempDir.create();
         File temp = new File( tempDir, f.getName() + ".json" );
 
-        String[] command = {"ogr2ogr", "-progress", "-preserve_fid", "-f", "GeoJSON", temp.getAbsolutePath(), f.getAbsolutePath()};
+        String[] command = {"ogr2ogr", "-preserve_fid", "-f", "GeoJSON", temp.getAbsolutePath(), f.getAbsolutePath()};
         return execute( command, monitor, (exitCode, out, err) -> {
             monitor.done();
             if (exitCode == 0 && !err.contains( "ERROR" )) {
