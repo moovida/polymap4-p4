@@ -20,8 +20,6 @@ import java.util.stream.Collectors;
 import java.io.File;
 
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import org.polymap.p4.data.importer.ContextIn;
 import org.polymap.p4.data.importer.ImporterFactory;
@@ -34,8 +32,6 @@ import org.polymap.p4.data.importer.ImporterFactory;
 public class ShpImporterFactory
         implements ImporterFactory {
 
-    private static Log log = LogFactory.getLog( ShpImporterFactory.class );
-    
     @ContextIn
     protected List<File>            files;
     
