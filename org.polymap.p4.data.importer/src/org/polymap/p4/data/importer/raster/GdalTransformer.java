@@ -61,11 +61,13 @@ class GdalTransformer
      * @throws IOException 
      */
     public static File translate( File f, IProgressMonitor monitor ) throws IOException {
+        monitor.beginTask( "translate to GeoTiff", IProgressMonitor.UNKNOWN );
         File tempDir = ImportTempDir.create();
         File temp = new File( tempDir, f.getName() + ".tif" );
 
         String[] command = {"gdal_translate", f.getAbsolutePath(), temp.getAbsolutePath()};
         return execute( command, monitor, (exitCode, out, err) -> {
+            monitor.done();
             if (exitCode == 0 && !err.contains( "ERROR" )) {
                 return temp;
             }
@@ -77,11 +79,13 @@ class GdalTransformer
     
     
     public static File warp( File f, String epsg, IProgressMonitor monitor ) throws IOException {
+        monitor.beginTask( "warp to " + epsg, IProgressMonitor.UNKNOWN );
         File tempDir = ImportTempDir.create();
         File temp = new File( tempDir, getBaseName( f.getName() ) + "." + substringAfterLast( epsg, ":" ) + ".tif" );
 
         String[] command = {"gdalwarp", "-t_srs", epsg, f.getAbsolutePath(), temp.getAbsolutePath()};
         return execute( command, monitor, (exitCode, out, err) -> {
+            monitor.done();
             if (exitCode == 0 && !err.contains( "ERROR" )) {
                 return temp;
             }

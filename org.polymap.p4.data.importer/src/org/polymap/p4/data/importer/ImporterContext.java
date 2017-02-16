@@ -90,7 +90,7 @@ public class ImporterContext
             WmsImporterFactory.class, 
             WfsImporterFactory.class,
             RasterImporterFactory.class,
-            // OgrImporterFactory.class 
+            //OgrImporterFactory.class 
             };
     
     private Importer                        importer;
@@ -192,7 +192,9 @@ public class ImporterContext
         verifier = new UIJob( "Progress import" ) {
             @Override
             protected void runWithException( IProgressMonitor monitor ) throws Exception {
+                verifierMonitor.beginTask( "Verifying data", IProgressMonitor.UNKNOWN );
                 importer.verify( verifierMonitor );
+                verifierMonitor.done();
                 
                 if (site().ok.get()) {
                     // check if all prompts also ok

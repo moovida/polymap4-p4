@@ -41,6 +41,7 @@ import org.eclipse.rap.rwt.RWT;
 import org.polymap.core.catalog.IUpdateableMetadataCatalog.Updater;
 import org.polymap.core.data.raster.GridCoverageReaderFactory;
 import org.polymap.core.data.raster.catalog.GridServiceResolver;
+import org.polymap.core.runtime.SubMonitor;
 import org.polymap.core.runtime.UIThreadExecutor;
 import org.polymap.core.runtime.i18n.IMessages;
 import org.polymap.core.runtime.text.MarkdownBuilder;
@@ -124,17 +125,18 @@ public class RasterImporter
             log.info( "File size: " + FileUtils.sizeOf( main ) );
 
             try {
+                monitor.subTask( "read data" );
                 grid = GridCoverageReaderFactory.openGeoTiff( main );
             }
             catch (Exception e) {
                 try {
                     // translate to GeoTiff
-                    main = GdalTransformer.translate( main, monitor );
+                    main = GdalTransformer.translate( main, new SubMonitor( monitor, 1 ) );
                     grid = GridCoverageReaderFactory.openGeoTiff( main );
                 }
                 catch (Exception e1) {
                     // last resort: warp to EPSG:3857
-                    main = GdalTransformer.warp( main, "EPSG:3857", monitor );
+                    main = GdalTransformer.warp( main, "EPSG:3857", new SubMonitor( monitor, 1 ) );
                     grid = GridCoverageReaderFactory.openGeoTiff( main );
                 }
             }
@@ -198,8 +200,8 @@ public class RasterImporter
                             catch (IOException e) {
                                 log.warn( "", e );
                             }
-                        })
-                        .paragraph( "*Grid support is in **BETA** stage. The data is imported and accessed as is. No error checking, validation or optimization is done.*" );
+                        });
+                        //.paragraph( "*Grid support is in **BETA** stage. The data is imported and accessed as is. No error checking, validation or optimization is done.*" );
                 tk.createFlowText( parent, out.toString() );
             }
             catch (Exception e) {

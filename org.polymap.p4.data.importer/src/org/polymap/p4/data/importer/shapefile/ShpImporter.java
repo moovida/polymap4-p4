@@ -49,6 +49,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 
 import org.polymap.core.runtime.Streams;
 import org.polymap.core.runtime.Streams.ExceptionCollector;
+import org.polymap.core.runtime.SubMonitor;
 import org.polymap.core.runtime.i18n.IMessages;
 
 import org.polymap.rhei.batik.app.SvgImageRegistryHelper;
@@ -168,6 +169,8 @@ public class ShpImporter
             if (ds != null) {
                 ds.dispose();
             }
+            monitor.beginTask( "Verifying Shapefile", 2 );
+            monitor.subTask( "open data store" );
             Map<String,Serializable> params = new HashMap<String,Serializable>();
             params.put( ShapefileDataStoreFactory.URLP.key, shp.toURI().toURL() );
             params.put( ShapefileDataStoreFactory.CREATE_SPATIAL_INDEX.key, Boolean.TRUE );
@@ -177,10 +180,12 @@ public class ShpImporter
             ds.forceSchemaCRS( crsPrompt.selection() );
             
             fs = ds.getFeatureSource();
+            monitor.worked( 1 );
             
             // sanity check all features
             ContentFeatureCollection results = fs.getFeatures();
-            monitor.beginTask( "Checking all features", results.size() );
+            SubMonitor submon = new SubMonitor( monitor, 1 );
+            submon.beginTask( "checking all features", results.size() );
             try (
                 SimpleFeatureIterator it = results.features();
             ){
@@ -193,9 +198,10 @@ public class ShpImporter
                         throw new RuntimeException( "Feature has no geometry: " + feature.getIdentifier().getID() );
                     }
                     // other checks...?
-                    monitor.worked( 1 );
+                    submon.worked( 1 );
                 }
             }
+            submon.done();
 
             site.ok.set( true );
             exception = null;

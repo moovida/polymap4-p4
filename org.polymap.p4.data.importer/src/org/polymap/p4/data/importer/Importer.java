@@ -50,13 +50,20 @@ public interface Importer {
      */
     public void createPrompts( IProgressMonitor monitor ) throws Exception;    
     
+    
     /**
      * Verifies the data/context and the state of the prompts. This is called when a
      * prompt has changed its status. This method may update the prompts, should set
      * {@link ImporterSite#ok} and prepare contents for the
      * {@link #createResultViewer(Composite)}.
      *
-     * @param monitor
+     * @param monitor The monitor has been
+     *        {@link IProgressMonitor#beginTask(String, int)} already with a default
+     *        task name and UNKNOWN size. The method implementation may overwrite
+     *        this if necessary, or just call
+     *        {@link IProgressMonitor#subTask(String)} and
+     *        {@link IProgressMonitor#worked(int)} to report progress. Should be
+     *        frequently checked for cancelation.
      */
     public void verify( IProgressMonitor monitor );
 
@@ -73,11 +80,13 @@ public interface Importer {
      */
     public void createResultViewer( Composite parent, IPanelToolkit toolkit );
 
+    
     /**
-     * Collects the results of this importer in {@link ContextOut}. This method
-     * is called only if {@link #verify(IProgressMonitor)} did set status ok.
+     * Collects the results of this importer in {@link ContextOut}. This method is
+     * called only if {@link #verify(IProgressMonitor)} did set status ok.
      * 
-     * @param monitor The monitor to report progress to. Frequently check for cancelation.
+     * @param monitor The monitor to report progress to. Should be frequently checked
+     *        for cancelation.
      */
     public void execute( IProgressMonitor monitor ) throws Exception;
     

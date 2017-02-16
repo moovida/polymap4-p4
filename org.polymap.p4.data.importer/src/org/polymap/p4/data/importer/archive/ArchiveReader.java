@@ -104,10 +104,13 @@ public class ArchiveReader
     public List<File> run( File f, @SuppressWarnings("hiding") IProgressMonitor monitor ) throws Exception {
         this.monitor = monitor;
         try (
-            InputStream in = new BufferedInputStream(  new FileInputStream( f ) ); 
+            InputStream in = new BufferedInputStream( new FileInputStream( f ) ); 
         ){
             handle( targetDir.get(), f.getName(), null, in );
             return results;
+        }
+        finally {
+            this.monitor = null;
         }
     }
 
@@ -116,6 +119,7 @@ public class ArchiveReader
         if (monitor.isCanceled()) {
             return;
         }
+        monitor.subTask( name );
         contentType = contentType == null ? "" : contentType;
         if (name.toLowerCase().endsWith( ".zip" ) 
                 || name.toLowerCase().endsWith( ".jar" ) 
@@ -133,6 +137,7 @@ public class ArchiveReader
         else {
             handleFile( dir, name, in );
         }
+        monitor.worked( 1 );
     }
     
     
