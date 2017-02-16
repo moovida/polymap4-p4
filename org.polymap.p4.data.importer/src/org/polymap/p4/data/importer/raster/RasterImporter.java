@@ -16,7 +16,6 @@ import static org.apache.commons.io.FilenameUtils.getBaseName;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 import java.util.Arrays;
-import java.util.List;
 
 import java.io.File;
 import java.io.IOException;
@@ -73,8 +72,6 @@ public class RasterImporter
     private ImporterSite            site;
 
     @ContextIn
-    protected List<File>            files;
-    
     protected File                  main;
 
     private Exception               exception;
@@ -96,14 +93,6 @@ public class RasterImporter
     @SuppressWarnings( "hiding" )
     public void init( ImporterSite site, IProgressMonitor monitor ) {
         this.site = site;
-        
-        // find main file
-        for (File f : files) {
-            if (RasterImporterFactory.isSupported( f )) {
-                main = f;
-                break;
-            }
-        }
         
         site.icon.set( ImporterPlugin.images().svgImage( "unknown_file.svg", SvgImageRegistryHelper.NORMAL24 ) );
         site.summary.set( i18n.get( "summary", main.getName() ) );

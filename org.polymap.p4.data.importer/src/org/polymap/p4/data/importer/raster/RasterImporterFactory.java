@@ -14,8 +14,6 @@
  */
 package org.polymap.p4.data.importer.raster;
 
-import static java.util.Collections.singletonList;
-
 import java.util.List;
 
 import java.io.File;
@@ -49,12 +47,12 @@ public class RasterImporterFactory
     @Override
     public void createImporters( ImporterBuilder builder ) throws Exception {
         if (file != null && isSupported( file )) {
-            builder.newImporter( new RasterImporter(), singletonList( file ) );            
+            builder.newImporter( new RasterImporter(), file );            
         }
         else if (files != null) {
             for (File f : files) {
                 if (isSupported( f )) {
-                    builder.newImporter( new RasterImporter(), files );
+                    builder.newImporter( new RasterImporter(), f );
                 }
             }
         }
