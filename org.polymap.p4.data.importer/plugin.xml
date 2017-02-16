@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
+   <extension-point id="org.polymap.p4.data.importer.importers" name="Importers" schema="schema/org.polymap.p4.data.importers.exsd"/>
    <extension
          point="org.polymap.rhei.batik.panels">
       <panel
@@ -15,6 +16,39 @@
             class="org.polymap.p4.data.importer.features.AddLayerForImportedFeaturesConcern"
             id="org.polymap.p4.AddLayerForImportedFeaturesConcern">
       </concern>
+   </extension>
+   <extension
+         point="org.polymap.p4.data.importer.importers">
+      <importer
+            class="org.polymap.p4.data.importer.archive.ArchiveFileImporterFactory">
+      </importer>
+      <importer
+            class="org.polymap.p4.data.importer.download.DownloadImporterFactory">
+      </importer>
+      <importer
+            class="org.polymap.p4.data.importer.wms.WmsImporterFactory">
+      </importer>
+      <importer
+            class="org.polymap.p4.data.importer.wfs.WfsImporterFactory">
+      </importer>
+      <importer
+            class="org.polymap.p4.data.importer.refine.csv.CSVFileImporterFactory">
+      </importer>
+      <importer
+            class="org.polymap.p4.data.importer.refine.excel.ExcelFileImporterFactory">
+      </importer>
+      <importer
+            class="org.polymap.p4.data.importer.geojson.GeoJSONImporterFactory">
+      </importer>
+      <importer
+            class="org.polymap.p4.data.importer.kml.KMLImporterFactory">
+      </importer>
+      <importer
+            class="org.polymap.p4.data.importer.shapefile.ShpImporterFactory">
+      </importer>
+      <importer
+            class="org.polymap.p4.data.importer.raster.RasterImporterFactory">
+      </importer>
    </extension>
 
 </plugin>

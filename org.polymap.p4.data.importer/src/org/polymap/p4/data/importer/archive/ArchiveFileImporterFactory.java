@@ -34,7 +34,7 @@ import org.polymap.p4.data.importer.ImporterFactory;
 public class ArchiveFileImporterFactory
         implements ImporterFactory {
 
-    private static Log log = LogFactory.getLog( ArchiveFileImporterFactory.class );
+    private static final Log log = LogFactory.getLog( ArchiveFileImporterFactory.class );
     
     @ContextIn
     protected File                  file;

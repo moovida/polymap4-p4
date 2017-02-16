@@ -55,16 +55,6 @@ import org.polymap.rhei.batik.toolkit.IPanelToolkit;
 
 import org.polymap.p4.data.importer.ImporterFactory.ImporterBuilder;
 import org.polymap.p4.data.importer.ImporterPrompt.Severity;
-import org.polymap.p4.data.importer.archive.ArchiveFileImporterFactory;
-import org.polymap.p4.data.importer.download.DownloadImporterFactory;
-import org.polymap.p4.data.importer.geojson.GeoJSONImporterFactory;
-import org.polymap.p4.data.importer.kml.KMLImporterFactory;
-import org.polymap.p4.data.importer.raster.RasterImporterFactory;
-import org.polymap.p4.data.importer.refine.csv.CSVFileImporterFactory;
-import org.polymap.p4.data.importer.refine.excel.ExcelFileImporterFactory;
-import org.polymap.p4.data.importer.shapefile.ShpImporterFactory;
-import org.polymap.p4.data.importer.wfs.WfsImporterFactory;
-import org.polymap.p4.data.importer.wms.WmsImporterFactory;
 
 /**
  * Provides the execution context of an {@link Importer}. It handles inbound context
@@ -77,21 +67,6 @@ public class ImporterContext
         extends Configurable {
 
     private static final Log log = LogFactory.getLog( ImporterContext.class );
-    
-    // XXX make this an extension point
-    private static final Class[]            FACTORIES = { 
-            ArchiveFileImporterFactory.class, 
-            CSVFileImporterFactory.class, 
-            ExcelFileImporterFactory.class, 
-            KMLImporterFactory.class,
-            GeoJSONImporterFactory.class,
-            ShpImporterFactory.class,
-            DownloadImporterFactory.class,
-            WmsImporterFactory.class, 
-            WfsImporterFactory.class,
-            RasterImporterFactory.class,
-            //OgrImporterFactory.class 
-            };
     
     private Importer                        importer;
     
@@ -257,12 +232,13 @@ public class ImporterContext
      * @throws InstantiationException 
      */
     public List<ImporterContext> findNext( IProgressMonitor monitor ) throws Exception {
-        monitor.beginTask( "Check importers", FACTORIES.length*10 );
+        List<ImporterExtension> exts = ImporterExtension.all();
+        monitor.beginTask( "Check importers", exts.size()*10 );
         
         List<ImporterContext> result = new ArrayList();
         
-        for (Class<ImporterFactory> cl : FACTORIES) {
-            ImporterFactory factory = cl.newInstance();
+        for (ImporterExtension ext : exts) {
+            ImporterFactory factory = ext.createFactory();
             injectContextIn( factory, contextOut );
             SubProgressMonitor submon = new SubProgressMonitor( monitor, 10 );
 

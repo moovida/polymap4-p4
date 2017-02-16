@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2015, the @authors. All rights reserved.
+ * Copyright (C) 2015-2017, the @authors. All rights reserved.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,6 +21,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.polymap.rhei.batik.toolkit.IPanelToolkit;
 
 /**
+ * An importer handles a particular data format or service type.
  * 
  * @see ContextIn
  * @see ContextOut

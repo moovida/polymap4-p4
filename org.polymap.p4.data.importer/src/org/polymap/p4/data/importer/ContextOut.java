@@ -22,6 +22,7 @@ import java.lang.annotation.Target;
 /**
  * Denotes an outbound element of the context of a given {@link Importer}.  
  *
+ * @see ContextIn
  * @author <a href="http://www.polymap.de">Falko Bräutigam</a>
  */
 @Retention( RetentionPolicy.RUNTIME )

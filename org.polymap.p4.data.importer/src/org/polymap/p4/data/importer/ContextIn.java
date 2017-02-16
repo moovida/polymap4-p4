@@ -20,13 +20,15 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Denotes an inbound element of the context of a given {@link Importer}.  
+ * Denotes inbound data of an {@link Importer} or {@link ImporterFactory}. Inbound
+ * data members are automatically initialized with the type matching outbound members
+ * from upstream importers.
  *
+ * @see ContextOut
  * @author <a href="http://www.polymap.de">Falko Bräutigam</a>
  */
 @Retention( RetentionPolicy.RUNTIME )
 @Target( { ElementType.FIELD } )
 @Documented
 public @interface ContextIn {
-
 }

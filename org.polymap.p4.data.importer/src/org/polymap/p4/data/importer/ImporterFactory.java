@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2015, the @authors. All rights reserved.
+ * Copyright (C) 2015-2017, the @authors. All rights reserved.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -28,8 +28,8 @@ import org.polymap.p4.data.importer.shapefile.ShpImporterFactory;
 public interface ImporterFactory {
 
     /**
-     * Checks to current {@link ContextIn} for applicable objects and builds {@link Importer}s
-     * for those objects.
+     * Checks to current {@link ContextIn} for applicable objects and creates new
+     * {@link Importer} instances for those objects.
      */
     public void createImporters( ImporterBuilder builder ) throws Exception;
 
