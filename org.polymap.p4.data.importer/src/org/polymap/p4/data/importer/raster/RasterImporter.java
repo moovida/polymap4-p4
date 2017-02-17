@@ -12,9 +12,6 @@
  */
 package org.polymap.p4.data.importer.raster;
 
-import static org.apache.commons.io.FilenameUtils.getBaseName;
-import static org.apache.commons.lang3.StringUtils.isBlank;
-
 import java.util.Arrays;
 
 import java.io.File;
@@ -22,7 +19,6 @@ import java.io.IOException;
 import java.io.StringWriter;
 
 import org.geotools.coverage.grid.io.GridCoverage2DReader;
-import org.geotools.data.ServiceInfo;
 import org.geotools.geometry.GeneralEnvelope;
 import org.geotools.referencing.CRS;
 
@@ -30,26 +26,20 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.google.common.collect.Sets;
-
 import org.eclipse.swt.widgets.Composite;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.rap.rwt.RWT;
 
-import org.polymap.core.catalog.IUpdateableMetadataCatalog.Updater;
 import org.polymap.core.data.raster.GridCoverageReaderFactory;
-import org.polymap.core.data.raster.catalog.GridServiceResolver;
+import org.polymap.core.operation.OperationSupport;
 import org.polymap.core.runtime.SubMonitor;
-import org.polymap.core.runtime.UIThreadExecutor;
 import org.polymap.core.runtime.i18n.IMessages;
 import org.polymap.core.runtime.text.MarkdownBuilder;
 
 import org.polymap.rhei.batik.app.SvgImageRegistryHelper;
 import org.polymap.rhei.batik.toolkit.IPanelToolkit;
-import org.polymap.rhei.batik.toolkit.SimpleDialog;
 
-import org.polymap.p4.P4Plugin;
 import org.polymap.p4.data.importer.ContextIn;
 import org.polymap.p4.data.importer.Importer;
 import org.polymap.p4.data.importer.ImporterPlugin;
@@ -205,48 +195,8 @@ public class RasterImporter
 
     @Override
     public void execute( IProgressMonitor monitor ) throws Exception {
-        // copy data files
-        monitor.beginTask( "Copying files", IProgressMonitor.UNKNOWN );
-        File targetDir = new File( P4Plugin.gridStoreDir(), getBaseName( main.getName() ) );
-        FileUtils.copyDirectory( main.getParentFile(), targetDir );
-        File targetMain = new File( targetDir, main.getName() );
-        
-        // create catalog entry
-        try (Updater update = P4Plugin.localCatalog().prepareUpdate()) {
-            ServiceInfo service = grid.getInfo();
-            update.newEntry( metadata -> {
-                metadata.setTitle( isBlank( service.getTitle() )
-                        ? getBaseName( service.getSource().toString() )
-                        : service.getTitle() );
-                
-                metadata.setDescription( grid.getFormat().getName() );
-                
-                metadata.setType( "Grid" );
-                metadata.setFormats( Sets.newHashSet( grid.getFormat().getName() ) );
-
-                if (service.getKeywords() != null) {
-                    metadata.setKeywords( service.getKeywords() );
-                }
-
-                String url = targetMain.toURI().toString();
-                metadata.setConnectionParams( GridServiceResolver.createParams( url ) );
-            });
-            update.commit();
-        }
-
-        //
-        UIThreadExecutor.async( () -> {
-            SimpleDialog dialog = new SimpleDialog();
-            dialog.title.put( "Information" );
-            dialog.setContents( parent -> {
-                toolkit.createFlowText( parent, i18n.get( "infoAdded" ) );
-            });
-            dialog.addOkAction( () -> {
-                dialog.close();
-                return true;
-            } );
-            dialog.open();
-        });
+        ImportRasterOperation op = new ImportRasterOperation( main, grid );
+        OperationSupport.instance().execute( op, false, false );
     }
 
 }

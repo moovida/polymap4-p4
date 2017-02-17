@@ -20,4 +20,5 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
  lib/commons-compress-1.9.jar
-Export-Package: org.polymap.p4.data.importer
+Export-Package: org.polymap.p4.data.importer,
+ org.polymap.p4.data.importer.prompts

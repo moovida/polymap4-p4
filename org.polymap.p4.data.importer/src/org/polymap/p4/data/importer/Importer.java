@@ -33,7 +33,7 @@ import org.polymap.rhei.batik.toolkit.IPanelToolkit;
  * The UI is made of {@link ImporterPrompt}s created by
  * {@link #createPrompts(IProgressMonitor)}. One prompt handles one particular
  * aspect of the data, such as charset, CRS, dataset name. A prompt shows the current
- * value of that aspect and provides a UI element to modify.
+ * value of that aspect and provides an UI element to modify.
  * 
  * @see ContextIn
  * @see ContextOut

@@ -16,6 +16,10 @@
             class="org.polymap.p4.data.importer.features.AddLayerForImportedFeaturesConcern"
             id="org.polymap.p4.AddLayerForImportedFeaturesConcern">
       </concern>
+      <concern
+            class="org.polymap.p4.data.importer.raster.AddLayerForImportedRasterConcern"
+            id="org.polymap.p4.data.importer.concern1">
+      </concern>
    </extension>
    <extension
          point="org.polymap.p4.data.importer.importers">
