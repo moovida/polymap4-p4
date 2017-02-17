@@ -22,6 +22,18 @@ import org.polymap.rhei.batik.toolkit.IPanelToolkit;
 
 /**
  * An importer handles a particular data format or service type.
+ * <p/>
+ * Importers are executed in a chain. This chain transforms the input (uploaded)
+ * data. A corresponding {@link ImporterFactory} checks input data before every next
+ * step if a particular {@link Importer} can handle the data.
+ * <p/>
+ * Member fields annotated with {@link ContextIn} or {@link ContextOut} define the
+ * valid inbound and outbound data of an Importer and ImporterFactory.
+ * <p/>
+ * The UI is made of {@link ImporterPrompt}s created by
+ * {@link #createPrompts(IProgressMonitor)}. One prompt handles one particular
+ * aspect of the data, such as charset, CRS, dataset name. A prompt shows the current
+ * value of that aspect and provides a UI element to modify.
  * 
  * @see ContextIn
  * @see ContextOut
@@ -51,7 +63,6 @@ public interface Importer {
      */
     public void createPrompts( IProgressMonitor monitor ) throws Exception;    
     
-    
     /**
      * Verifies the data/context and the state of the prompts. This is called when a
      * prompt has changed its status. This method may update the prompts, should set
@@ -80,8 +91,7 @@ public interface Importer {
      * @param toolkit The toolkit to use to create new controls.
      */
     public void createResultViewer( Composite parent, IPanelToolkit toolkit );
-
-    
+ 
     /**
      * Collects the results of this importer in {@link ContextOut}. This method is
      * called only if {@link #verify(IProgressMonitor)} did set status ok.
