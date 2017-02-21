@@ -54,5 +54,11 @@
             class="org.polymap.p4.data.importer.raster.RasterImporterFactory">
       </importer>
    </extension>
+   <extension
+         point="org.polymap.p4.data.importer.importers">
+      <importer
+            class="org.polymap.p4.data.importer.geopaparazzi.GeopaparazziImporterFactory">
+      </importer>
+   </extension>
 
 </plugin>
