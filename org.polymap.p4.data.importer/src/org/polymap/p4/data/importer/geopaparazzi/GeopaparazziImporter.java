@@ -12,17 +12,22 @@
  */
 package org.polymap.p4.data.importer.geopaparazzi;
 
-import java.io.File;
-import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
 
-import org.geotools.data.Query;
+import java.io.File;
+
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
-import org.geotools.data.store.ContentFeatureCollection;
+import org.geotools.data.simple.SimpleFeatureCollection;
+import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.FeatureCollection;
+import org.geotools.feature.FeatureIterator;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.jgrasstools.dbs.compat.IJGTConnection;
 import org.jgrasstools.dbs.spatialite.jgt.SqliteDb;
 import org.jgrasstools.gears.io.geopaparazzi.OmsGeopaparazzi4Converter;
+import org.jgrasstools.gears.io.geopaparazzi.geopap4.DaoGpsLog.GpsLog;
+import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
@@ -46,6 +51,7 @@ import org.polymap.p4.data.importer.ImporterPlugin;
 import org.polymap.p4.data.importer.ImporterSite;
 import org.polymap.p4.data.importer.Messages;
 import org.polymap.p4.data.importer.prompts.CrsPrompt;
+import org.polymap.p4.data.importer.prompts.SchemaNamePrompt;
 
 /**
  * 
@@ -59,7 +65,7 @@ public class GeopaparazziImporter
 
     private static final IMessages                 i18nPrompt = Messages.forPrefix( "ImporterPrompt" );
 
-    private static final IMessages                 i18n       = Messages.forPrefix( "ImporterShp" );
+    private static final IMessages                 i18n       = Messages.forPrefix( "ImporterGpap" );
 
     private static final ShapefileDataStoreFactory dsFactory  = new ShapefileDataStoreFactory();
 
@@ -78,6 +84,8 @@ public class GeopaparazziImporter
 
     private CrsPrompt                              crsPrompt;
 
+    private SchemaNamePrompt                       schemaNamePrompt;
+
 
     @Override
     public ImporterSite site() {
@@ -89,7 +97,7 @@ public class GeopaparazziImporter
     @SuppressWarnings( "hiding" )
     public void init( ImporterSite site, IProgressMonitor monitor ) {
         this.site = site;
-        site.icon.set( ImporterPlugin.images().svgImage( "shp.svg", SvgImageRegistryHelper.NORMAL24 ) );
+        site.icon.set( ImporterPlugin.images().svgImage( "gpap.svg", SvgImageRegistryHelper.NORMAL24 ) );
         site.summary.set( i18n.get( "summary", layerName ) );
         site.description.set( i18n.get( "description" ) );
         site.terminal.set( true );
@@ -111,7 +119,7 @@ public class GeopaparazziImporter
 
         crsPrompt = new CrsPrompt( site, defaultCrs() );
 
-        // schemaNamePrompt = new SchemaNamePrompt( site, getBaseName( layerName ) );
+        schemaNamePrompt = new SchemaNamePrompt( site, layerName );
     }
 
 
@@ -127,54 +135,25 @@ public class GeopaparazziImporter
                 db.open( geopapDatabaseFile.getAbsolutePath() );
                 IJGTConnection connection = db.getConnection();
 
+                GPProgressMonitor pm = new GPProgressMonitor( monitor );
                 switch (layerName) {
                     case OmsGeopaparazzi4Converter.SIMPLE_NOTES:
-                        OmsGeopaparazzi4Converter.simpleNotes2featurecollection( connection, new GPProgressMonitor( monitor ) );
+                        features = OmsGeopaparazzi4Converter.simpleNotes2featurecollection( connection, pm );
                         break;
-
+                    case OmsGeopaparazzi4Converter.GPS_LOGS:
+                        List<GpsLog> gpsLogsList = OmsGeopaparazzi4Converter.getGpsLogsList( connection );
+                        features = OmsGeopaparazzi4Converter.getLogLinesFeatureCollection( pm, gpsLogsList );
+                        break;
+                    case OmsGeopaparazzi4Converter.MEDIA_NOTES:
+                        features = OmsGeopaparazzi4Converter.media2IdBasedFeatureCollection( connection, pm );
+                        break;
                     default:
+                        HashMap<String,SimpleFeatureCollection> complexNotesMap = OmsGeopaparazzi4Converter.complexNotes2featurecollections( connection, pm );
+                        features = complexNotesMap.get( layerName );
                         break;
                 }
 
             }
-
-            // if (ds != null) {
-            // ds.dispose();
-            // }
-            // monitor.beginTask( "Verifying Shapefile", 2 );
-            // monitor.subTask( "open data store" );
-            // Map<String,Serializable> params = new HashMap<String,Serializable>();
-            // params.put( ShapefileDataStoreFactory.URLP.key, shp.toURI().toURL() );
-            // params.put( ShapefileDataStoreFactory.CREATE_SPATIAL_INDEX.key,
-            // Boolean.TRUE );
-            //
-            // ds = (ShapefileDataStore)dsFactory.createNewDataStore( params );
-            //// ds.setCharset( charsetPrompt.selection() );
-            // ds.forceSchemaCRS( crsPrompt.selection() );
-            //
-            // fs = ds.getFeatureSource();
-            // monitor.worked( 1 );
-            //
-            // // sanity check all features
-            // ContentFeatureCollection results = fs.getFeatures();
-            // SubMonitor submon = new SubMonitor( monitor, 1 );
-            // submon.beginTask( "checking all features", results.size() );
-            // try (
-            // SimpleFeatureIterator it = results.features();) {
-            // SimpleFeatureType schema = fs.getSchema();
-            // while (it.hasNext()) {
-            // SimpleFeature feature = it.next();
-            // // geometry
-            // if (schema.getGeometryDescriptor() != null
-            // && feature.getDefaultGeometry() == null) {
-            // throw new RuntimeException( "Feature has no geometry: " +
-            // feature.getIdentifier().getID() );
-            // }
-            // // other checks...?
-            // submon.worked( 1 );
-            // }
-            // }
-            // submon.done();
 
             site.ok.set( true );
             exception = null;
@@ -193,7 +172,7 @@ public class GeopaparazziImporter
         }
         else {
             try {
-                SimpleFeatureType schema = (SimpleFeatureType)fs.getSchema();
+                SimpleFeatureType schema = (SimpleFeatureType)features.getSchema();
                 // log.info( "Features: " + features.size() + " : " +
                 // schema.getTypeName() );
                 // tk.createFlowText( parent, "Features: *" + features.size() + "*"
@@ -204,12 +183,24 @@ public class GeopaparazziImporter
 
                 // XXX GeoTools shapefile impl does not handle setFirstResult() well
                 // so we can just display 100 features :(
-                Query query = new Query();
-                query.setMaxFeatures( 1000 );
-                ContentFeatureCollection content = fs.getFeatures( query );
-                table.setInput( content );
+                // Query query = new Query();
+                // query.setMaxFeatures( 1000 );
+                // ContentFeatureCollection content = features.subCollection( query
+                // );
+
+                DefaultFeatureCollection fc = new DefaultFeatureCollection();
+                int count = 0;
+                FeatureIterator featureIterator = features.features();
+                while (featureIterator.hasNext()) {
+                    SimpleFeature feature = (SimpleFeature)featureIterator.next();
+                    fc.add( feature );
+                    if (count > 1000)
+                        break;
+                }
+
+                table.setInput( fc );
             }
-            catch (IOException e) {
+            catch (Exception e) {
                 tk.createFlowText( parent, "\nUnable to read the data.\n\n**Reason**: " + exception.getMessage() );
                 site.ok.set( false );
                 exception = e;
@@ -221,9 +212,8 @@ public class GeopaparazziImporter
     @Override
     public void execute( IProgressMonitor monitor ) throws Exception {
         // no maxResults restriction
-        ContentFeatureCollection result = fs.getFeatures();
 
-        features = schemaNamePrompt.retypeFeatures( result, shp.getName() );
+        features = schemaNamePrompt.retypeFeatures( (SimpleFeatureCollection)features, layerName );
     }
 
 }

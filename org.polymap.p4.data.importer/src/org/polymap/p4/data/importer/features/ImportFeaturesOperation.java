@@ -89,7 +89,7 @@ public class ImportFeaturesOperation
         // XXX check namespace, remove when fixed
         if (schema.getName().getNamespaceURI() != null) {
             //log.warn( "RDataStore does not handle namespace properly: " + schema.getName() );
-            throw new RuntimeException( "RDataStore does not handle namespace properly: " + schema.getName() );
+            //throw new RuntimeException( "RDataStore does not handle namespace properly: " + schema.getName() );
         }
         
         DataAccess ds = P4Plugin.localCatalog().localFeaturesStore();        
